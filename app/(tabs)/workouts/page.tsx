@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import GoToToday from "@/components/GoToToday";
+import LogExercise from "@/components/LogExercise";
 import TodayPill from "@/components/TodayPill";
 import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
@@ -13,6 +14,8 @@ import {
   type PlanExercise,
   type WorkoutDay,
 } from "@/lib/workouts/plan";
+import { latestSets, type HistoryRow } from "@/lib/workouts/history";
+import { defaultRepsFor, defaultWeightFor } from "@/lib/workouts/logging";
 import { ensureDefaultPlan } from "@/lib/workouts/seed";
 
 const arrowClass =
@@ -55,6 +58,60 @@ export default async function WorkoutsPage({
       .eq("day_id", today.id)
       .order("position", { ascending: true });
     exercises = (data ?? []) as PlanExercise[];
+  }
+
+  // Sets already logged on this date, and the sets from previous workouts ("last time").
+  type TodaySet = { id: string; exercise_id: string | null; set_number: number; weight: number; reps: number };
+  let todaySets: TodaySet[] = [];
+  let history: HistoryRow[] = [];
+  const bestById = new Map<string, number | null>();
+  if (exercises.length > 0) {
+    // The heaviest weight ever logged for each exercise (any date), for the quick-reference line.
+    const bests = await Promise.all(
+      exercises.map(async (exercise) => {
+        const { data } = await supabase
+          .from("workout_sets")
+          .select("weight")
+          .eq("exercise_id", exercise.id)
+          .not("weight", "is", null)
+          .order("weight", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return [exercise.id, data ? Number(data.weight) : null] as const;
+      }),
+    );
+    for (const [id, best] of bests) bestById.set(id, best);
+
+    const { data: session } = await supabase
+      .from("workout_sessions")
+      .select("id, workout_sets(id, exercise_id, set_number, weight, reps)")
+      .eq("session_date", date)
+      .maybeSingle();
+    todaySets = ((session?.workout_sets ?? []) as TodaySet[]).map((s) => ({
+      ...s,
+      weight: Number(s.weight),
+      reps: Number(s.reps),
+    }));
+
+    const { data: past } = await supabase
+      .from("workout_sets")
+      .select("exercise_id, set_number, weight, reps, workout_sessions!inner(session_date)")
+      .in("exercise_id", exercises.map((e) => e.id))
+      .lt("workout_sessions.session_date", date)
+      .order("created_at", { ascending: false })
+      .limit(800);
+    history = (past ?? []).map((row) => {
+      // The joined session comes back as one object (or a one-item list).
+      const joined = row.workout_sessions as unknown as { session_date: string } | { session_date: string }[];
+      const sessionDate = Array.isArray(joined) ? joined[0]?.session_date : joined?.session_date;
+      return {
+        exercise_id: row.exercise_id as string | null,
+        session_date: sessionDate ?? "",
+        set_number: row.set_number as number,
+        weight: row.weight === null ? null : Number(row.weight),
+        reps: row.reps === null ? null : Number(row.reps),
+      };
+    });
   }
 
   return (
@@ -144,14 +201,23 @@ export default async function WorkoutsPage({
             exercises.map((exercise, index) => {
               const target = formatSetsReps(exercise.target_sets, exercise.rep_min, exercise.rep_max);
               const connector = connectorAfter(exercise, index === exercises.length - 1);
+              const mySets = todaySets
+                .filter((set) => set.exercise_id === exercise.id)
+                .sort((a, b) => a.set_number - b.set_number);
+              const lastTime = latestSets(history, exercise.id);
+              // The wheels start where you left off: your last set today, else last workout's first set.
+              const seed = mySets.at(-1) ?? lastTime[0];
               return (
                 <Fragment key={exercise.id}>
-                  <div className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3">
-                    <p className="min-w-0 text-base font-medium">{exercise.name}</p>
-                    <p className={`shrink-0 text-sm ${target ? "font-semibold" : "text-muted"}`}>
-                      {target || "Set sets & reps"}
-                    </p>
-                  </div>
+                  <LogExercise
+                    exercise={{ id: exercise.id, name: exercise.name, target }}
+                    date={date}
+                    todaySets={mySets.map((set) => ({ id: set.id, weight: set.weight, reps: set.reps }))}
+                    lastTime={lastTime}
+                    bestWeight={bestById.get(exercise.id) ?? null}
+                    initialWeight={defaultWeightFor(exercise.name, seed?.weight)}
+                    initialReps={defaultRepsFor(exercise.rep_max, seed?.reps)}
+                  />
                   {connector === "superset" && (
                     <p className="flex items-center justify-center gap-1.5 py-0.5 text-sm font-semibold text-accent">
                       <span aria-hidden="true">⚡</span> Superset · no rest
@@ -167,7 +233,6 @@ export default async function WorkoutsPage({
             })
           )}
 
-          <p className="text-center text-xs text-muted">Logging your sets and weights is coming next.</p>
         </section>
       )}
     </div>
