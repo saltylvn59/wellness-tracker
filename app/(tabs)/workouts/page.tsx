@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
+import SaunaLog from "@/components/SaunaLog";
+import StretchCheck from "@/components/StretchCheck";
 import TodayPill from "@/components/TodayPill";
 import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
@@ -58,6 +60,19 @@ export default async function WorkoutsPage({
       .eq("day_id", today.id)
       .order("position", { ascending: true });
     exercises = (data ?? []) as PlanExercise[];
+  }
+
+  // Today's sauna minutes and whether the stretch is ticked (lifting days only).
+  let saunaMinutes: number | null = null;
+  let stretchDone = false;
+  if (today?.kind === "lift") {
+    const { data: extras } = await supabase
+      .from("workout_sessions")
+      .select("sauna_minutes, stretch_done")
+      .eq("session_date", date)
+      .maybeSingle();
+    saunaMinutes = extras?.sauna_minutes ?? null;
+    stretchDone = Boolean(extras?.stretch_done);
   }
 
   // Sets already logged on this date, and the sets from previous workouts ("last time").
@@ -193,6 +208,8 @@ export default async function WorkoutsPage({
             </Link>
           </div>
 
+          <SaunaLog date={date} dayId={today.id} minutes={saunaMinutes} />
+
           {exercises.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
               No exercises yet. Tap Edit plan to add some.
@@ -233,6 +250,7 @@ export default async function WorkoutsPage({
             })
           )}
 
+          <StretchCheck date={date} dayId={today.id} done={stretchDone} />
         </section>
       )}
     </div>

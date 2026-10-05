@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { validateSetInput } from "@/lib/workouts/logging";
+import { upsertSession } from "@/lib/workouts/session";
 
 export type LogResult = { ok: true } | { ok: false; message: string };
 
@@ -43,21 +44,14 @@ export async function logSet(input: {
   if (!day) return FAILED;
 
   // One session per date (the table enforces it); reuse it if it already exists.
-  const { data: session, error: sessionError } = await supabase
-    .from("workout_sessions")
-    .upsert(
-      { user_id: userId, session_date: input.date, day_id: day.id, title: day.title },
-      { onConflict: "user_id,session_date" },
-    )
-    .select("id")
-    .single();
-  if (sessionError || !session) return FAILED;
+  const sessionId = await upsertSession(supabase, userId, input.date, day);
+  if (!sessionId) return FAILED;
 
   // Next set number for this exercise today.
   const { data: last } = await supabase
     .from("workout_sets")
     .select("set_number")
-    .eq("session_id", session.id)
+    .eq("session_id", sessionId)
     .eq("exercise_id", exercise.id)
     .order("set_number", { ascending: false })
     .limit(1)
@@ -67,7 +61,7 @@ export async function logSet(input: {
 
   const { error } = await supabase.from("workout_sets").insert({
     user_id: userId,
-    session_id: session.id,
+    session_id: sessionId,
     exercise_id: exercise.id,
     exercise_name: exercise.name,
     position: exercise.position,
