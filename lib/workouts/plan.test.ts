@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PLAN } from "./defaults";
-import { formatRest, formatSetsReps, groupSupersets, parsePlanJson, REST_BETWEEN_EXERCISES } from "./plan";
+import {
+  connectorAfter,
+  formatRest,
+  formatSetsReps,
+  parsePlanJson,
+  REST_BETWEEN_EXERCISES,
+} from "./plan";
 
 describe("DEFAULT_PLAN", () => {
   it("covers all seven weekdays exactly once", () => {
@@ -96,27 +102,6 @@ describe("parsePlanJson", () => {
   });
 });
 
-describe("groupSupersets", () => {
-  it("links an exercise with the one after it", () => {
-    const list = [
-      { n: "A", superset_with_next: true },
-      { n: "B", superset_with_next: false },
-      { n: "C", superset_with_next: false },
-    ];
-    expect(groupSupersets(list).map((g) => g.map((e) => e.n))).toEqual([["A", "B"], ["C"]]);
-  });
-
-  it("supports longer chains and an empty list", () => {
-    const chain = [
-      { n: "A", superset_with_next: true },
-      { n: "B", superset_with_next: true },
-      { n: "C", superset_with_next: false },
-    ];
-    expect(groupSupersets(chain).map((g) => g.length)).toEqual([3]);
-    expect(groupSupersets([])).toEqual([]);
-  });
-});
-
 describe("rest between exercises", () => {
   it("defaults to 3-5 minutes", () => {
     expect(REST_BETWEEN_EXERCISES).toEqual({ minMinutes: 3, maxMinutes: 5 });
@@ -128,20 +113,21 @@ describe("rest between exercises", () => {
     expect(formatRest({ minMinutes: 1, maxMinutes: 3 })).toBe("Rest 1–3 min");
   });
 
-  it("puts a rest after every group except the last (so none inside a superset)", () => {
+  it("shows a superset marker or a rest reminder between exercises, and nothing after the last", () => {
     const list = [
       { n: "Pec deck", superset_with_next: true },
       { n: "Incline press", superset_with_next: false },
       { n: "Pull downs", superset_with_next: false },
       { n: "Deadlift", superset_with_next: false },
     ];
-    const groups = groupSupersets(list);
-    const restsAfter = groups.map((_, i) => i < groups.length - 1);
-    expect(groups.map((g) => g.map((e) => e.n))).toEqual([
-      ["Pec deck", "Incline press"],
-      ["Pull downs"],
-      ["Deadlift"],
-    ]);
-    expect(restsAfter).toEqual([true, true, false]);
+    const connectors = list.map((e, i) => connectorAfter(e, i === list.length - 1));
+    expect(connectors).toEqual(["superset", "rest", "rest", null]);
+  });
+
+  it("never shows a rest between two supersetted exercises", () => {
+    expect(connectorAfter({ superset_with_next: true }, false)).toBe("superset");
+    expect(connectorAfter({ superset_with_next: false }, false)).toBe("rest");
+    // a (bad) superset flag on the last exercise still shows nothing
+    expect(connectorAfter({ superset_with_next: true }, true)).toBeNull();
   });
 });

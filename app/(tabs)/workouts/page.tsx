@@ -7,9 +7,9 @@ import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import {
+  connectorAfter,
   formatRest,
   formatSetsReps,
-  groupSupersets,
   type PlanExercise,
   type WorkoutDay,
 } from "@/lib/workouts/plan";
@@ -141,40 +141,30 @@ export default async function WorkoutsPage({
               No exercises yet. Tap Edit plan to add some.
             </p>
           ) : (
-            groupSupersets(exercises).map((group, groupIndex, groups) => (
-              <Fragment key={group[0].id}>
-                <div
-                  className={
-                    group.length > 1
-                      ? "space-y-px overflow-hidden rounded-2xl border-2 border-accent"
-                      : "overflow-hidden rounded-2xl"
-                  }
-                >
-                  {group.length > 1 && (
-                    <p className="bg-accent px-4 py-1 text-xs font-semibold text-on-accent">
-                      Superset · no rest between
+            exercises.map((exercise, index) => {
+              const target = formatSetsReps(exercise.target_sets, exercise.rep_min, exercise.rep_max);
+              const connector = connectorAfter(exercise, index === exercises.length - 1);
+              return (
+                <Fragment key={exercise.id}>
+                  <div className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3">
+                    <p className="min-w-0 text-base font-medium">{exercise.name}</p>
+                    <p className={`shrink-0 text-sm ${target ? "font-semibold" : "text-muted"}`}>
+                      {target || "Set sets & reps"}
+                    </p>
+                  </div>
+                  {connector === "superset" && (
+                    <p className="flex items-center justify-center gap-1.5 py-0.5 text-sm font-semibold text-accent">
+                      <span aria-hidden="true">⚡</span> Superset · no rest
                     </p>
                   )}
-                  {group.map((exercise) => {
-                    const target = formatSetsReps(exercise.target_sets, exercise.rep_min, exercise.rep_max);
-                    return (
-                      <div key={exercise.id} className="flex min-h-14 items-center justify-between gap-3 bg-card px-4 py-3">
-                        <p className="min-w-0 text-base font-medium">{exercise.name}</p>
-                        <p className={`shrink-0 text-sm ${target ? "font-semibold" : "text-muted"}`}>
-                          {target || "Set sets & reps"}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Rest after every exercise (or superset pair) except the last one. */}
-                {groupIndex < groups.length - 1 && (
-                  <p className="flex items-center justify-center gap-1.5 py-0.5 text-sm font-medium text-muted">
-                    <span aria-hidden="true">⏱</span> {formatRest()}
-                  </p>
-                )}
-              </Fragment>
-            ))
+                  {connector === "rest" && (
+                    <p className="flex items-center justify-center gap-1.5 py-0.5 text-sm font-medium text-muted">
+                      <span aria-hidden="true">⏱</span> {formatRest()}
+                    </p>
+                  )}
+                </Fragment>
+              );
+            })
           )}
 
           <p className="text-center text-xs text-muted">Logging your sets and weights is coming next.</p>

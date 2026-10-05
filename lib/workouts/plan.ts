@@ -127,24 +127,19 @@ export function parsePlanJson(raw: unknown): PlanParseResult {
   return { ok: true, exercises };
 }
 
-// Groups consecutive exercises that are supersetted together, e.g.
-// [A (superset), B, C] -> [[A, B], [C]]. Used to draw linked pairs.
-export function groupSupersets<T extends { superset_with_next: boolean }>(exercises: T[]): T[][] {
-  const groups: T[][] = [];
-  let current: T[] = [];
-  for (const exercise of exercises) {
-    current.push(exercise);
-    if (!exercise.superset_with_next) {
-      groups.push(current);
-      current = [];
-    }
-  }
-  if (current.length > 0) groups.push(current);
-  return groups;
+// What to show between one exercise and the next:
+//   "superset": the two are done back to back with no rest
+//   "rest":     rest 3-5 minutes before the next exercise
+//   null:       nothing, because this is the last exercise
+export type Connector = "superset" | "rest" | null;
+
+export function connectorAfter(exercise: { superset_with_next: boolean }, isLast: boolean): Connector {
+  if (isLast) return null;
+  return exercise.superset_with_next ? "superset" : "rest";
 }
 
-// How long to rest after an exercise (or after a superset pair) before the next one.
-// Shown as a reminder between exercises; within a superset there is no rest.
+// How long to rest after an exercise before the next one. Shown as a reminder
+// between exercises; between two supersetted exercises there is no rest.
 export const REST_BETWEEN_EXERCISES = { minMinutes: 3, maxMinutes: 5 } as const;
 
 /** "Rest 3–5 min", or "Rest 4 min" when both ends are equal. */
