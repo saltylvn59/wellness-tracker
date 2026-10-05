@@ -9,7 +9,8 @@ An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting wo
 - **Streaks 🔥:** Nutrition: consecutive days with at least one food entry. Fitness: consecutive days with logged lifting sets or cardio; the Sunday rest day neither breaks nor adds to it; today doesn't break it until the day is over. Shown as a badge with best streak and milestone celebrations; computed in the browser from the user's local date (`lib/streak.ts`).
 - **Fitness tab (one page, driven by the week calendar):** green ring and a check on every day with a logged workout or cardio. Weekly plan: Sunday = rest; Monday = Chest and Back; Wednesday = Legs; Friday = Delts and Arms; Tuesday, Thursday, Saturday = cardio.
   - **Lifting days:** Sauna (10 min checkbox, start of workout) and Stretch (10 min checkbox, end of workout), both on the right of their cards; the user's own editable exercise list; supersets shown as a marker between exercises, 3-5 min rest reminders; per exercise the user enters their own sets and rep range, and a Log button opens a sheet with scroll wheels for weight (2.5 lb steps) and reps; last time, today's sets, and heaviest weight show on each card; weight defaults: last used, else 100 lb, dumbbell exercises 25 lb.
-  - **Cardio days:** Log run / cycle / swim, each with optional distance (miles for run and cycle, yards for swim) and time; add and delete. Weekly distance goals are not built (the user asked to keep it simple).
+  - **Cardio days:** Log run / cycle / swim, each with optional distance (miles for run and cycle, yards for swim) and time; add and delete. Weekly distance goals (Settings): run default 5 mi, cycle default 10 mi, swim no default (yards); blank = no goal. A "This week" card on cardio days shows a progress bar for each, Monday to Sunday.
+- **App icon:** an upward line graph of connected dots, white on iPhone Messages green, drawn in code (`lib/appIcon.tsx`); same icon for the home screen and browser tabs.
 - **Tabs:** two bottom tabs, Nutrition (`/food`) and Fitness (`/workouts`).
 
 ## Stack
@@ -41,5 +42,5 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 5. AI photo estimate ✅ ("Take a picture"; photos resized in-browser, never stored; photo flow still to be tried on a real iPhone)
 6. Streaks ✅ (Fitness and Nutrition badges, best streak, milestones, calendar rings)
 7. Workouts ✅ (weekly plan; editable exercises with own sets/rep ranges; supersets and 3-5 min rest reminders; Log button with scroll wheels for weight and reps; last time, today's sets, and heaviest weight on each card; weight defaults: last used, else 100 lb, dumbbell 25 lb)
-8. Cardio ✅ (run/cycle/swim with optional distance and time, under the cardio days; weekly distance goals skipped for now)
+8. Cardio ✅ (run/cycle/swim with optional distance and time, under the cardio days; weekly distance goals with progress bars)
 9. Polish and real-iPhone testing (still to do: try photo logging, scroll wheels, and the checkboxes on a real iPhone)
