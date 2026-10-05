@@ -7,6 +7,7 @@ import {
   formatWeekday,
   getLocalDateKey,
   isValidDateKey,
+  weekDays,
 } from "./dates";
 
 describe("isValidDateKey", () => {
@@ -36,6 +37,50 @@ describe("addDays", () => {
     expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
     expect(addDays("2026-01-01", -1)).toBe("2025-12-31");
     expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+  });
+});
+
+describe("weekDays", () => {
+  it("lists Sunday through Saturday by default", () => {
+    // Oct 5, 2026 is a Monday
+    expect(weekDays("2026-10-05")).toEqual([
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+    ]);
+  });
+
+  it("gives the same week for every day in it", () => {
+    const week = weekDays("2026-10-05");
+    for (const day of week) expect(weekDays(day)).toEqual(week);
+  });
+
+  it("starts a new week on Sunday", () => {
+    expect(weekDays("2026-10-04")[0]).toBe("2026-10-04"); // a Sunday
+    expect(weekDays("2026-10-10")[6]).toBe("2026-10-10"); // the Saturday before
+    expect(weekDays("2026-10-11")[0]).toBe("2026-10-11"); // next Sunday
+  });
+
+  it("can start on Monday instead", () => {
+    expect(weekDays("2026-10-05", 1)[0]).toBe("2026-10-05"); // Monday
+    expect(weekDays("2026-10-04", 1)).toEqual(weekDays("2026-09-29", 1)); // Sunday ends its week
+    expect(weekDays("2026-10-04", 1)[6]).toBe("2026-10-04");
+  });
+
+  it("crosses month and year boundaries", () => {
+    expect(weekDays("2026-12-31")).toEqual([
+      "2026-12-27",
+      "2026-12-28",
+      "2026-12-29",
+      "2026-12-30",
+      "2026-12-31",
+      "2027-01-01",
+      "2027-01-02",
+    ]);
   });
 });
 

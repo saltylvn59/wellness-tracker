@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import DayHeader from "@/components/DayHeader";
 import GoToToday from "@/components/GoToToday";
-import { isValidDateKey } from "@/lib/dates";
+import WeekStrip, { type WeekDay } from "@/components/WeekStrip";
+import { isValidDateKey, weekDays } from "@/lib/dates";
 import { MEAL_LABELS, MEAL_TYPES, sumEntries, type FoodEntry } from "@/lib/food";
 import { getGoalStatus } from "@/lib/goalStatus";
 import { createClient } from "@/lib/supabase/server";
@@ -23,24 +24,37 @@ export default async function FoodPage({
   const userId = claims?.claims.sub;
   if (!userId) redirect("/login");
 
-  // Fetch your goal and this day's entries at the same time.
+  // Fetch your goal and the whole week's entries at the same time.
+  // (One query covers all 7 days: the week strip needs each day's total.)
+  const week = weekDays(date);
   const [{ data: profile }, { data: rows }] = await Promise.all([
     supabase.from("profiles").select("calorie_goal").eq("id", userId).maybeSingle(),
     supabase
       .from("food_entries")
       .select("id, entry_date, meal_type, name, calories, protein_g, carbs_g, fat_g, source")
-      .eq("entry_date", date)
+      .gte("entry_date", week[0])
+      .lte("entry_date", week[6])
       .order("created_at", { ascending: true }),
   ]);
 
   const goal: number | null = profile?.calorie_goal ?? null;
-  const entries = (rows ?? []) as FoodEntry[];
+  const weekEntries = (rows ?? []) as FoodEntry[];
+  const weekSummary: WeekDay[] = week.map((dateKey) => {
+    const dayEntries = weekEntries.filter((e) => e.entry_date === dateKey);
+    return {
+      dateKey,
+      calories: sumEntries(dayEntries).calories,
+      hasEntries: dayEntries.length > 0,
+    };
+  });
+  const entries = weekEntries.filter((e) => e.entry_date === date);
   const totals = sumEntries(entries);
   const status = getGoalStatus(totals.calories, goal);
   const progress = goal ? Math.min(100, (totals.calories / goal) * 100) : 0;
 
   return (
     <div className="space-y-6">
+      <WeekStrip days={weekSummary} selected={date} goal={goal} />
       <DayHeader dateKey={date} status={status} />
 
       <section className="rounded-2xl bg-card p-4">

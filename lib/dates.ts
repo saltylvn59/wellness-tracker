@@ -30,6 +30,17 @@ export function addDays(key: string, n: number): string {
   return toKey(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }
 
+/** 0 = weeks start on Sunday (US calendar). Use 1 for Monday. */
+export const WEEK_STARTS_ON = 0;
+
+/** The 7 date keys of the week that contains `key`, in order. */
+export function weekDays(key: string, weekStartsOn: number = WEEK_STARTS_ON): string[] {
+  const [y, m, d] = parts(key);
+  const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0 = Sunday
+  const start = addDays(key, -((dayOfWeek - weekStartsOn + 7) % 7));
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
 /** Today's date on THIS device's clock. Only call this in the browser. */
 export function getLocalDateKey(now: Date = new Date()): string {
   return toKey(now.getFullYear(), now.getMonth() + 1, now.getDate());
@@ -45,6 +56,7 @@ function format(key: string, options: Intl.DateTimeFormatOptions): string {
 }
 
 export const formatWeekday = (key: string) => format(key, { weekday: "long" });
+export const formatWeekdayShort = (key: string) => format(key, { weekday: "short" });
 export const formatShortMonth = (key: string) => format(key, { month: "short" });
 export const formatDayNumber = (key: string) => format(key, { day: "numeric" });
 export const formatFullDate = (key: string) =>
