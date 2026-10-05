@@ -5,8 +5,11 @@ import { getSupabaseEnv } from "./env";
 // For server code: pages, server actions, route handlers.
 // Create a new client per request (never share one between requests).
 export async function createClient() {
-  const { url, publishableKey } = getSupabaseEnv();
+  // Read cookies first: this tells Next.js the page is per-user and must be
+  // built on each request, never pre-built at deploy time. (If the settings
+  // check ran first and failed, the deploy build itself would crash.)
   const cookieStore = await cookies();
+  const { url, publishableKey } = getSupabaseEnv();
 
   return createServerClient(url, publishableKey, {
     cookies: {
