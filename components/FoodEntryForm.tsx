@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { saveFoodEntry, type FormState } from "@/app/(tabs)/food/actions";
-import { MEAL_LABELS, MEAL_TYPES, type FoodEntry } from "@/lib/food";
+import { MEAL_LABELS, MEAL_TYPES, type FoodEntry, type Nutrition } from "@/lib/food";
 
 // text-base = 16px: smaller text makes iPhone Safari zoom in when you tap a field.
 const inputClass =
@@ -12,13 +12,16 @@ const labelClass = "mb-1 block text-sm font-medium text-muted";
 
 export default function FoodEntryForm({
   entry,
+  prefill,
   defaultDate,
 }: {
   entry?: FoodEntry; // present when editing, absent when adding
+  prefill?: Nutrition; // starting values when adding from a saved food
   defaultDate: string;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(saveFoodEntry, null);
   const date = entry?.entry_date ?? defaultDate;
+  const start = entry ?? prefill; // what the fields begin with
 
   return (
     <form action={formAction} className="space-y-4">
@@ -34,7 +37,7 @@ export default function FoodEntryForm({
           type="text"
           required
           maxLength={200}
-          defaultValue={entry?.name}
+          defaultValue={start?.name}
           placeholder="e.g. Greek yogurt with berries"
           className={inputClass}
         />
@@ -86,7 +89,7 @@ export default function FoodEntryForm({
           min={0}
           max={10000}
           required
-          defaultValue={entry?.calories}
+          defaultValue={start?.calories}
           placeholder="kcal"
           className={inputClass}
         />
@@ -95,9 +98,9 @@ export default function FoodEntryForm({
       <div className="grid grid-cols-3 gap-3">
         {(
           [
-            ["protein_g", "Protein (g)", entry?.protein_g],
-            ["carbs_g", "Carbs (g)", entry?.carbs_g],
-            ["fat_g", "Fat (g)", entry?.fat_g],
+            ["protein_g", "Protein (g)", start?.protein_g],
+            ["carbs_g", "Carbs (g)", start?.carbs_g],
+            ["fat_g", "Fat (g)", start?.fat_g],
           ] as const
         ).map(([name, label, value]) => (
           <div key={name}>
@@ -119,6 +122,18 @@ export default function FoodEntryForm({
           </div>
         ))}
       </div>
+
+      {/* A food that came from your saved list is already saved. */}
+      {!prefill && (
+        <label className="flex min-h-12 items-center gap-3 rounded-xl bg-card px-4">
+          <input
+            type="checkbox"
+            name="save_food"
+            className="h-5 w-5 shrink-0 accent-[var(--accent)]"
+          />
+          <span className="text-base">Save to my foods for next time</span>
+        </label>
+      )}
 
       {state && (
         <p role="alert" className="text-sm text-danger">

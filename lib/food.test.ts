@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFoodForm, sumEntries } from "./food";
+import { parseFoodForm, parseNutritionForm, sumEntries } from "./food";
 
 function form(fields: Record<string, string>) {
   const data = new FormData();
@@ -71,6 +71,22 @@ describe("parseFoodForm", () => {
   it("rejects an unknown meal or a bad date", () => {
     expect(parseFoodForm(form({ ...valid, meal_type: "brunch" })).ok).toBe(false);
     expect(parseFoodForm(form({ ...valid, entry_date: "2026-02-30" })).ok).toBe(false);
+  });
+});
+
+describe("parseNutritionForm (used for saved foods)", () => {
+  it("needs only a name, calories, and optional macros (no meal or date)", () => {
+    const result = parseNutritionForm(form({ name: "Banana", calories: "105", carbs_g: "27" }));
+    expect(result).toEqual({
+      ok: true,
+      values: { name: "Banana", calories: 105, protein_g: 0, carbs_g: 27, fat_g: 0 },
+    });
+  });
+
+  it("applies the same rules as logging a food", () => {
+    expect(parseNutritionForm(form({ name: "", calories: "100" })).ok).toBe(false);
+    expect(parseNutritionForm(form({ name: "Banana", calories: "" })).ok).toBe(false);
+    expect(parseNutritionForm(form({ name: "Banana", calories: "100", fat_g: "5000" })).ok).toBe(false);
   });
 });
 
