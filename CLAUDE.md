@@ -5,8 +5,9 @@ An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting wo
 ## Features
 - **Food log:** add food by photo or typed description; AI estimates calories and macros (always editable). Daily totals vs calorie goal.
 - **Water:** a slim row on each day of the Nutrition tab: tap +20 oz per bottle (undo available); three steps at 20, 40 and 60 oz, with the third as the daily goal (60 oz). Stored one row per bottle in `water_logs`; logic in `lib/water.ts`.
-- **Macro goals:** optional protein/carb/fat goals; the Food tab shows each as `eaten / goal g` with a progress bar.
-- **Header:** today's date in a circle: green if at/under calorie goal, red if over.
+- **Nutrition tab layout:** header like Fitness ("Nutrition" top-left; Today / Jump to today and the settings gear top-right), streak badge, week strip with week arrows, then a small "Weekday · date" line. The hero card focuses on calories and macros: a calorie ring (`CalorieRing`: green at/under goal, red over, "X left / X over") beside three macro rows (`MacroRow`: `eaten / goal g` with a thin bar). Optional protein/carb/fat goals are set in Settings.
+- **Settings gear:** `SettingsGear` sits top-right on both Nutrition and Fitness and opens the one shared Settings page.
+- **Name and splash:** the app is called DEVELOP (subtitle "wellness tracker"). A logo + name splash shows for about a second on launch, once per browser session (`SplashScreen`, plus a tiny script in `app/layout.tsx` that sets a sessionStorage flag). iOS caches the home-screen name and icon, so after a rename delete the icon and re-add it.
 - **Streaks 🔥:** Nutrition: consecutive days with at least one food entry. Fitness: consecutive days with logged lifting sets or cardio; the Sunday rest day neither breaks nor adds to it; today doesn't break it until the day is over. Shown as a badge with best streak and milestone celebrations; computed in the browser from the user's local date (`lib/streak.ts`).
 - **Fitness tab (one page, driven by the week calendar):** green ring and a check on every day with a logged workout or cardio. Weekly plan: Sunday = rest; Monday = Chest and Back; Wednesday = Legs; Friday = Delts and Arms; Tuesday, Thursday, Saturday = cardio.
   - **Lifting days:** Sauna (10 min checkbox, start of workout) and Stretch (10 min checkbox, end of workout), both on the right of their cards; the user's own editable exercise list; supersets shown as a marker between exercises, 3-5 min rest reminders; per exercise the user enters their own sets and rep range, and a Log button opens a sheet with scroll wheels for weight (2.5 lb steps) and reps; last time, today's sets, and heaviest weight show on each card; weight defaults: last used, else 100 lb, dumbbell exercises 25 lb.
@@ -44,4 +45,5 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 6. Streaks ✅ (Fitness and Nutrition badges, best streak, milestones, calendar rings)
 7. Workouts ✅ (weekly plan; editable exercises with own sets/rep ranges; supersets and 3-5 min rest reminders; Log button with scroll wheels for weight and reps; last time, today's sets, and heaviest weight on each card; weight defaults: last used, else 100 lb, dumbbell 25 lb)
 8. Cardio ✅ (run/cycle/swim with optional distance and time, under the cardio days; weekly distance goals with progress bars)
-9. Polish and real-iPhone testing (still to do: try photo logging, scroll wheels, and the checkboxes on a real iPhone)
+9. Nutrition redesign (calorie ring, shared settings gear) and DEVELOP rename with launch splash ✅
+10. Polish and real-iPhone testing (still to do: try photo logging, scroll wheels, and the checkboxes on a real iPhone)
