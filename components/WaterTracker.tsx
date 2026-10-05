@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { addWater, undoWater } from "@/app/(tabs)/food/water-actions";
 import { BOTTLE_OZ, DAILY_WATER_OZ, STEP_MILESTONES, waterProgress } from "@/lib/water";
 
-// The Water card on the Nutrition tab: tap "+ 20 oz" each time you finish a bottle.
-// Three steps (20, 40, 60 oz) fill in as you go; the third one is your daily goal.
+// A slim water row on the Nutrition tab: tap "+20 oz" each time you finish a bottle.
+// Three small pills (20, 40, 60 oz) fill in as you go; the third is your daily goal.
 export default function WaterTracker({ date, totalOz }: { date: string; totalOz: number }) {
   const router = useRouter();
   // The number updates instantly; if saving fails it goes back to what's really saved.
@@ -27,63 +27,49 @@ export default function WaterTracker({ date, totalOz }: { date: string; totalOz:
   }
 
   return (
-    <section className="rounded-2xl bg-card p-4">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-medium text-muted">
-          <span aria-hidden="true">💧</span> Water
-        </h2>
-        <p className="text-sm tabular-nums">
-          <span className="text-2xl font-bold">{progress.total}</span>
-          <span className="text-muted"> / {DAILY_WATER_OZ} oz</span>
-        </p>
-      </div>
+    <section aria-label="Water" className="rounded-2xl bg-card px-4 py-2">
+      <div className="flex items-center gap-3">
+        <span className="text-base" aria-hidden="true">
+          💧
+        </span>
 
-      <ol aria-label="Water steps" className="mt-3 grid grid-cols-3 gap-2">
-        {STEP_MILESTONES.map((oz, index) => {
-          const done = progress.steps > index;
-          return (
-            <li
-              key={oz}
-              aria-label={`Step ${index + 1}, ${oz} ounces${done ? ", done" : ""}`}
-              className={`rounded-xl py-2 text-center text-xs font-semibold ${
-                done ? "bg-accent text-on-accent" : "bg-border text-muted"
-              }`}
-            >
-              {done ? "✓ " : ""}Step {index + 1}
-              <span className="block text-[11px] font-medium opacity-90">{oz} oz</span>
-            </li>
-          );
-        })}
-      </ol>
+        <div className="min-w-0 flex-1">
+          <ol aria-label="Water steps" className="flex gap-1">
+            {STEP_MILESTONES.map((oz, index) => (
+              <li
+                key={oz}
+                aria-label={`Step ${index + 1}, ${oz} ounces${progress.steps > index ? ", done" : ""}`}
+                className={`h-1.5 flex-1 rounded-full ${progress.steps > index ? "bg-accent" : "bg-border"}`}
+              />
+            ))}
+          </ol>
+          <p className="mt-1 text-xs tabular-nums text-muted">
+            <span className="font-medium text-foreground">{progress.total}</span> / {DAILY_WATER_OZ} oz
+            {progress.goalReached && <span className="ml-1.5 font-medium text-accent">🎉 goal</span>}
+          </p>
+        </div>
 
-      <p className={`mt-2 text-sm ${progress.goalReached ? "font-semibold text-accent" : "text-muted"}`}>
-        {progress.goalReached
-          ? "🎉 Daily water goal reached!"
-          : `Step ${progress.steps + 1} of 3 · ${BOTTLE_OZ - (progress.total % BOTTLE_OZ)} oz to go`}
-      </p>
-
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={() => change(BOTTLE_OZ, () => addWater({ date }))}
-          disabled={pending}
-          className="min-h-12 flex-1 rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-60"
-        >
-          + {BOTTLE_OZ} oz
-        </button>
         <button
           type="button"
           onClick={() => change(-BOTTLE_OZ, () => undoWater({ date }))}
           disabled={pending || progress.total === 0}
           aria-label="Undo the last 20 oz"
-          className="min-h-12 rounded-xl border border-border px-5 text-base font-medium active:opacity-80 disabled:opacity-40"
+          className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-base text-muted active:opacity-70 disabled:opacity-30"
         >
-          Undo
+          ↩
+        </button>
+        <button
+          type="button"
+          onClick={() => change(BOTTLE_OZ, () => addWater({ date }))}
+          disabled={pending}
+          className="min-h-11 shrink-0 rounded-lg border border-border px-3 text-sm font-semibold text-accent active:opacity-70 disabled:opacity-60"
+        >
+          +{BOTTLE_OZ} oz
         </button>
       </div>
 
       {error && (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="pb-1 text-xs text-danger">
           {error}
         </p>
       )}
