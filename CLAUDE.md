@@ -27,13 +27,13 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 ## Commands
 - `npm run dev`: start the local dev server
 - `npm run build`: production build
-- `npm test`: run tests (once set up)
+- `npm test`: run unit tests (vitest; pure logic in `lib/`)
 
 ## Roadmap
 0. Setup ✅ (Node, git, project folder)
 1. Skeleton + PWA shell + first deploy ✅ (live at https://wellness-tracker-virid.vercel.app, verified on iPhone)
 2. Auth + database ✅ (Google sign-in, profiles table + RLS, calorie-goal settings; live and verified)
-3. Manual food log + daily view + date circle
+3. Manual food log + daily view + date circle ✅ (add/edit/delete, green/red circle, Sun-Sat week strip, vitest tests)
 4. AI text estimate
 5. AI photo estimate
 6. Streaks
