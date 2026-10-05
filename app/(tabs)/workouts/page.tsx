@@ -1,11 +1,10 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import ExtraCheck from "@/components/ExtraCheck";
 import FitnessSwitch from "@/components/FitnessSwitch";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
-import SaunaLog from "@/components/SaunaLog";
-import StretchCheck from "@/components/StretchCheck";
 import TodayPill from "@/components/TodayPill";
 import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
@@ -63,16 +62,16 @@ export default async function WorkoutsPage({
     exercises = (data ?? []) as PlanExercise[];
   }
 
-  // Today's sauna minutes and whether the stretch is ticked (lifting days only).
-  let saunaMinutes: number | null = null;
+  // Whether today's sauna and stretch are ticked (lifting days only).
+  let saunaDone = false;
   let stretchDone = false;
   if (today?.kind === "lift") {
     const { data: extras } = await supabase
       .from("workout_sessions")
-      .select("sauna_minutes, stretch_done")
+      .select("sauna_done, stretch_done")
       .eq("session_date", date)
       .maybeSingle();
-    saunaMinutes = extras?.sauna_minutes ?? null;
+    saunaDone = Boolean(extras?.sauna_done);
     stretchDone = Boolean(extras?.stretch_done);
   }
 
@@ -211,7 +210,7 @@ export default async function WorkoutsPage({
             </Link>
           </div>
 
-          <SaunaLog date={date} dayId={today.id} minutes={saunaMinutes} />
+          <ExtraCheck kind="sauna" date={date} dayId={today.id} done={saunaDone} />
 
           {exercises.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
@@ -253,7 +252,7 @@ export default async function WorkoutsPage({
             })
           )}
 
-          <StretchCheck date={date} dayId={today.id} done={stretchDone} />
+          <ExtraCheck kind="stretch" date={date} dayId={today.id} done={stretchDone} />
         </section>
       )}
     </div>

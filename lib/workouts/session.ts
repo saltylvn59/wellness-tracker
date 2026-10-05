@@ -2,12 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Extra things recorded on a workout day besides the sets themselves.
 export type SessionFields = {
-  sauna_minutes?: number | null;
+  sauna_done?: boolean;
   stretch_done?: boolean;
 };
 
 // Makes sure there is a workout session for this date (one per date, enforced by
-// the database) and optionally updates its sauna / stretch fields. Only the fields
+// the database) and optionally updates its sauna / stretch ticks. Only the fields
 // you pass are changed. Returns the session id, or null if saving failed.
 export async function upsertSession(
   supabase: SupabaseClient,
