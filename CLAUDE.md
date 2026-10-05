@@ -10,7 +10,7 @@ An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting wo
 - **Fitness tab (one page, driven by the week calendar):** green ring and a check on every day with a logged workout or cardio. Weekly plan: Sunday = rest; Monday = Chest and Back; Wednesday = Legs; Friday = Delts and Arms; Tuesday, Thursday, Saturday = cardio.
   - **Lifting days:** Sauna (10 min checkbox, start of workout) and Stretch (10 min checkbox, end of workout), both on the right of their cards; the user's own editable exercise list; supersets shown as a marker between exercises, 3-5 min rest reminders; per exercise the user enters their own sets and rep range, and a Log button opens a sheet with scroll wheels for weight (2.5 lb steps) and reps; last time, today's sets, and heaviest weight show on each card; weight defaults: last used, else 100 lb, dumbbell exercises 25 lb.
   - **Cardio days:** Log run / cycle / swim, each with optional distance (miles for run and cycle, yards for swim) and time; add and delete. Weekly distance goals (Settings): run default 5 mi, cycle default 10 mi, swim no default (yards); blank = no goal. A "This week" card on cardio days shows a progress bar for each, Monday to Sunday.
-- **App icon:** an upward line graph of connected dots, white on iPhone Messages green, drawn in code (`lib/appIcon.tsx`); same icon for the home screen and browser tabs.
+- **App icon:** a flat Apple-green upward line graph of connected dots (haloed peak dot) on pure black, drawn in code (`lib/appIcon.tsx`). iPhones allow only one home-screen icon for a web app (no light/dark switching), so this dark icon is used for the home screen and all browser tabs.
 - **Tabs:** two bottom tabs, Nutrition (`/food`) and Fitness (`/workouts`).
 
 ## Stack
