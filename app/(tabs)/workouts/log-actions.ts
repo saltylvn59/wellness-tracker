@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { DATABASE_BEHIND_MESSAGE } from "@/lib/dbErrors";
 import { validateSetInput } from "@/lib/workouts/logging";
 import { upsertSession } from "@/lib/workouts/session";
 
@@ -44,8 +45,9 @@ export async function logSet(input: {
   if (!day) return FAILED;
 
   // One session per date (the table enforces it); reuse it if it already exists.
-  const sessionId = await upsertSession(supabase, userId, input.date, day);
-  if (!sessionId) return FAILED;
+  const session = await upsertSession(supabase, userId, input.date, day);
+  if (!session.ok) return session.databaseBehind ? { ok: false, message: DATABASE_BEHIND_MESSAGE } : FAILED;
+  const sessionId = session.id;
 
   // Next set number for this exercise today.
   const { data: last } = await supabase

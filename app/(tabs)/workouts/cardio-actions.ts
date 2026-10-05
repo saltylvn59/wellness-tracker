@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { validateCardio } from "@/lib/cardio";
+import { DATABASE_BEHIND_MESSAGE, isMissingSchemaError } from "@/lib/dbErrors";
 import { isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,7 +36,7 @@ export async function logCardio(input: {
     distance_unit: checked.unit,
     duration_minutes: checked.minutes,
   });
-  if (error) return FAILED;
+  if (error) return isMissingSchemaError(error) ? { ok: false, message: DATABASE_BEHIND_MESSAGE } : FAILED;
 
   revalidatePath("/workouts"); // the cardio list, the streak, and the week rings all live here
   return { ok: true };

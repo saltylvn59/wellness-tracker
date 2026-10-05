@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isoWeekday, isValidDateKey } from "@/lib/dates";
+import { DATABASE_BEHIND_MESSAGE } from "@/lib/dbErrors";
 import { EXTRAS, parseExtraKind } from "@/lib/workouts/extras";
 import { upsertSession } from "@/lib/workouts/session";
 import { createClient } from "@/lib/supabase/server";
@@ -40,14 +41,19 @@ export async function setExtraDone(input: {
   }
 
   // The first tick on a date also creates that day's workout session.
-  const sessionId = await upsertSession(
+  const session = await upsertSession(
     supabase,
     userId,
     input.date,
     { id: day.id as string, title: day.title as string },
     { [EXTRAS[kind].column]: input.done },
   );
-  if (!sessionId) return { ok: false, message: "Couldn't save. Please try again." };
+  if (!session.ok) {
+    return {
+      ok: false,
+      message: session.databaseBehind ? DATABASE_BEHIND_MESSAGE : "Couldn't save. Please try again.",
+    };
+  }
 
   revalidatePath("/workouts");
   return { ok: true };
