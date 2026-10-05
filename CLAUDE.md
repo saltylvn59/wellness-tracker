@@ -4,6 +4,7 @@ An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting wo
 
 ## Features
 - **Food log:** add food by photo or typed description; AI estimates calories and macros (always editable). Daily totals vs calorie goal.
+- **Water:** a slim row on each day of the Nutrition tab: tap +20 oz per bottle (undo available); three steps at 20, 40 and 60 oz, with the third as the daily goal (60 oz). Stored one row per bottle in `water_logs`; logic in `lib/water.ts`.
 - **Macro goals:** optional protein/carb/fat goals; the Food tab shows each as `eaten / goal g` with a progress bar.
 - **Header:** today's date in a circle: green if at/under calorie goal, red if over.
 - **Streaks 🔥:** Nutrition: consecutive days with at least one food entry. Fitness: consecutive days with logged lifting sets or cardio; the Sunday rest day neither breaks nor adds to it; today doesn't break it until the day is over. Shown as a badge with best streak and milestone celebrations; computed in the browser from the user's local date (`lib/streak.ts`).
