@@ -33,9 +33,9 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 0. Setup ✅ (Node, git, project folder)
 1. Skeleton + PWA shell + first deploy ✅ (live at https://wellness-tracker-virid.vercel.app, verified on iPhone)
 2. Auth + database ✅ (Google sign-in, profiles table + RLS, calorie-goal settings; live and verified)
-3. Manual food log + daily view + date circle ✅ (add/edit/delete, green/red circle, Mon-Sun week strip, vitest tests)
-4. AI text estimate
-5. AI photo estimate
+3. Manual food log + daily view + date circle ✅ + Add food hub (Saved foods library) ✅ (add/edit/delete, green/red circle, Mon-Sun week strip, vitest tests)
+4. AI text estimate (the hub's "Describe your food" button; currently "coming soon")
+5. AI photo estimate (the hub's "Take a picture" button; currently "coming soon")
 6. Streaks
 7. Workouts
 8. Cardio + goals
