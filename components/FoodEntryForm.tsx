@@ -1,0 +1,146 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState } from "react";
+import { saveFoodEntry, type FormState } from "@/app/(tabs)/food/actions";
+import { MEAL_LABELS, MEAL_TYPES, type FoodEntry } from "@/lib/food";
+
+// text-base = 16px: smaller text makes iPhone Safari zoom in when you tap a field.
+const inputClass =
+  "min-h-12 w-full rounded-xl border border-border bg-background px-4 text-base";
+const labelClass = "mb-1 block text-sm font-medium text-muted";
+
+export default function FoodEntryForm({
+  entry,
+  defaultDate,
+}: {
+  entry?: FoodEntry; // present when editing, absent when adding
+  defaultDate: string;
+}) {
+  const [state, formAction, pending] = useActionState<FormState, FormData>(saveFoodEntry, null);
+  const date = entry?.entry_date ?? defaultDate;
+
+  return (
+    <form action={formAction} className="space-y-4">
+      {entry && <input type="hidden" name="id" value={entry.id} />}
+
+      <div>
+        <label htmlFor="name" className={labelClass}>
+          What did you have?
+        </label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          required
+          maxLength={200}
+          defaultValue={entry?.name}
+          placeholder="e.g. Greek yogurt with berries"
+          className={inputClass}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="meal_type" className={labelClass}>
+            Meal
+          </label>
+          <select
+            id="meal_type"
+            name="meal_type"
+            defaultValue={entry?.meal_type ?? "breakfast"}
+            className={inputClass}
+          >
+            {MEAL_TYPES.map((meal) => (
+              <option key={meal} value={meal}>
+                {MEAL_LABELS[meal]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="entry_date" className={labelClass}>
+            Date
+          </label>
+          <input
+            id="entry_date"
+            name="entry_date"
+            type="date"
+            required
+            defaultValue={date}
+            className={inputClass}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="calories" className={labelClass}>
+          Calories
+        </label>
+        <input
+          id="calories"
+          name="calories"
+          type="number"
+          inputMode="numeric"
+          step="any"
+          min={0}
+          max={10000}
+          required
+          defaultValue={entry?.calories}
+          placeholder="kcal"
+          className={inputClass}
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {(
+          [
+            ["protein_g", "Protein (g)", entry?.protein_g],
+            ["carbs_g", "Carbs (g)", entry?.carbs_g],
+            ["fat_g", "Fat (g)", entry?.fat_g],
+          ] as const
+        ).map(([name, label, value]) => (
+          <div key={name}>
+            <label htmlFor={name} className={labelClass}>
+              {label}
+            </label>
+            <input
+              id={name}
+              name={name}
+              type="number"
+              inputMode="numeric"
+              step="any"
+              min={0}
+              max={1000}
+              defaultValue={value}
+              placeholder="0"
+              className={inputClass}
+            />
+          </div>
+        ))}
+      </div>
+
+      {state && (
+        <p role="alert" className="text-sm text-danger">
+          {state.message}
+        </p>
+      )}
+
+      <div className="flex gap-3 pt-2">
+        <Link
+          href={`/food?date=${date}`}
+          className="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-border text-base font-medium active:opacity-80"
+        >
+          Cancel
+        </Link>
+        <button
+          type="submit"
+          disabled={pending}
+          className="min-h-12 flex-1 rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-60"
+        >
+          {pending ? "Saving…" : entry ? "Save changes" : "Add food"}
+        </button>
+      </div>
+    </form>
+  );
+}
