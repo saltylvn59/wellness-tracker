@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import AiStatus from "@/components/AiStatus";
 import GoalsForm from "@/components/GoalsForm";
 import type { Goals } from "@/lib/goals";
 import { signOut } from "./actions";
@@ -34,6 +35,8 @@ export default async function SettingsPage() {
       <section className="rounded-2xl bg-card p-4">
         <GoalsForm goals={goals} />
       </section>
+
+      <AiStatus keyPresent={Boolean(process.env.GEMINI_API_KEY)} />
 
       <form action={signOut}>
         <button

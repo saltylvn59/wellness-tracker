@@ -1,5 +1,6 @@
 import { ApiError, GoogleGenAI, ThinkingLevel, type Part } from "@google/genai";
 import { buildModelChain, classifyGeminiError, isTimeoutError } from "./modelChain";
+import { plainErrorMessage, redactSecrets } from "./redact";
 import {
   NUTRITION_JSON_SCHEMA,
   parseAiNutrition,
@@ -110,4 +111,56 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
   }
 
   return lastResult;
+}
+
+// ---------------------------------------------------------------------------
+// Connection check, used by the "Test AI connection" button in Settings.
+// Sends a tiny request to each model (stopping at the first that answers) and
+// reports what happened, without ever including the API key.
+
+export type DiagnoseAttempt = { model: string; ok: boolean; ms: number; detail: string };
+export type DiagnoseResult = { keyPresent: boolean; attempts: DiagnoseAttempt[] };
+
+export async function diagnoseGemini(): Promise<DiagnoseResult> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { keyPresent: false, attempts: [] };
+
+  const ai = new GoogleGenAI({ apiKey });
+  const attempts: DiagnoseAttempt[] = [];
+
+  for (const model of buildModelChain(process.env.GEMINI_MODEL)) {
+    const started = Date.now();
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [{ role: "user", parts: [{ text: "Reply with the single word OK." }] }],
+        config: {
+          maxOutputTokens: 64,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          abortSignal: AbortSignal.timeout(8_000),
+        },
+      });
+      attempts.push({
+        model,
+        ok: true,
+        ms: Date.now() - started,
+        detail: redactSecrets(response.text ?? "(empty reply)", 40),
+      });
+      break; // one working model is enough
+    } catch (error) {
+      const status = error instanceof ApiError ? error.status : undefined;
+      const message = error instanceof Error ? error.message : "";
+      const timedOut = isTimeoutError(error);
+      attempts.push({
+        model,
+        ok: false,
+        ms: Date.now() - started,
+        detail: timedOut
+          ? "timed out"
+          : redactSecrets(`${status ?? ""} ${plainErrorMessage(message)}`.trim() || "unknown error"),
+      });
+      if (classifyGeminiError({ status, message, timedOut }) === "stop") break; // e.g. a bad key
+    }
+  }
+  return { keyPresent: true, attempts };
 }
