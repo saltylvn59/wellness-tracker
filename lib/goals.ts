@@ -1,12 +1,15 @@
-// Daily goals from the Settings form. The calorie goal is required (it drives
-// the green/red date circle); the three macro goals are optional, and a blank
-// field means "no goal for this one".
+// Goals from the Settings form. The daily calorie goal is required (it drives the
+// green/red date circle). The three daily macro goals and the three weekly cardio
+// distance goals are optional: a blank field means "no goal for this one".
 
 export type Goals = {
   calorie_goal: number;
   protein_goal_g: number | null;
   carb_goal_g: number | null;
   fat_goal_g: number | null;
+  weekly_run_miles: number | null;
+  weekly_cycle_miles: number | null;
+  weekly_swim_yards: number | null;
 };
 
 export type GoalsResult = { ok: true; values: Goals } | { ok: false; message: string };
@@ -17,6 +20,9 @@ export const GOAL_LIMITS = {
   protein_goal_g: { min: 1, max: 1000 },
   carb_goal_g: { min: 1, max: 2000 },
   fat_goal_g: { min: 1, max: 1000 },
+  weekly_run_miles: { min: 0.1, max: 500 },
+  weekly_cycle_miles: { min: 0.1, max: 500 },
+  weekly_swim_yards: { min: 1, max: 100000 },
 } as const;
 
 // Blank -> null; a number in range -> the whole number; anything else -> "invalid".
@@ -30,6 +36,20 @@ function readGoal(
   const n = Number(text);
   if (!Number.isFinite(n)) return "invalid";
   const rounded = Math.round(n);
+  return rounded < min || rounded > max ? "invalid" : rounded;
+}
+
+// Like readGoal, but keeps up to 2 decimals (for miles) and accepts "12,5" too.
+function readDecimalGoal(
+  raw: FormDataEntryValue | null,
+  min: number,
+  max: number,
+): number | null | "invalid" {
+  const text = typeof raw === "string" ? raw.trim().replace(",", ".") : "";
+  if (text === "") return null;
+  const n = Number(text);
+  if (!Number.isFinite(n)) return "invalid";
+  const rounded = Math.round(n * 100) / 100;
   return rounded < min || rounded > max ? "invalid" : rounded;
 }
 
@@ -60,5 +80,25 @@ export function parseGoalsForm(formData: FormData): GoalsResult {
     macros[key] = value;
   }
 
-  return { ok: true, values: { calorie_goal: calories, ...macros } };
+  // Weekly cardio distance goals (run and cycle in miles, swim in yards).
+  const run = readDecimalGoal(formData.get("weekly_run_miles"), GOAL_LIMITS.weekly_run_miles.min, GOAL_LIMITS.weekly_run_miles.max);
+  const cycle = readDecimalGoal(formData.get("weekly_cycle_miles"), GOAL_LIMITS.weekly_cycle_miles.min, GOAL_LIMITS.weekly_cycle_miles.max);
+  if (run === "invalid" || cycle === "invalid") {
+    return { ok: false, message: "Weekly run and cycle goals must be between 0.1 and 500 miles, or left blank." };
+  }
+  const swim = readGoal(formData.get("weekly_swim_yards"), GOAL_LIMITS.weekly_swim_yards.min, GOAL_LIMITS.weekly_swim_yards.max);
+  if (swim === "invalid") {
+    return { ok: false, message: "The weekly swim goal must be whole yards from 1 to 100,000, or left blank." };
+  }
+
+  return {
+    ok: true,
+    values: {
+      calorie_goal: calories,
+      ...macros,
+      weekly_run_miles: run,
+      weekly_cycle_miles: cycle,
+      weekly_swim_yards: swim,
+    },
+  };
 }

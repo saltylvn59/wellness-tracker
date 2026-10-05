@@ -10,7 +10,9 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("calorie_goal, protein_goal_g, carb_goal_g, fat_goal_g")
+    .select(
+      "calorie_goal, protein_goal_g, carb_goal_g, fat_goal_g, weekly_run_miles, weekly_cycle_miles, weekly_swim_yards",
+    )
     .eq("id", userId ?? "")
     .maybeSingle();
 
@@ -20,6 +22,9 @@ export default async function SettingsPage() {
     protein_goal_g: null,
     carb_goal_g: null,
     fat_goal_g: null,
+    weekly_run_miles: null,
+    weekly_cycle_miles: null,
+    weekly_swim_yards: null,
   }) as unknown as Goals;
 
   return (

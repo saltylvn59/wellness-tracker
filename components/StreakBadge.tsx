@@ -28,20 +28,15 @@ export default function StreakBadge({
   const next = nextMilestone(current);
 
   return (
-    <section
-      aria-label={label}
-      className={`rounded-2xl px-4 py-3 ${current > 0 ? "bg-accent text-on-accent" : "bg-card"}`}
-    >
+    <section aria-label={label} className="rounded-2xl bg-card px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-lg font-bold">
           <span aria-hidden="true">🔥</span>{" "}
           {current > 0 ? `${current}-day streak` : "No streak yet"}
         </p>
-        <p className={`text-sm font-medium ${current > 0 ? "opacity-90" : "text-muted"}`}>
-          Best: {longest}
-        </p>
+        <p className="text-sm font-medium text-muted">Best: {longest}</p>
       </div>
-      <p className={`mt-0.5 text-sm ${current > 0 ? "opacity-90" : "text-muted"}`}>
+      <p className={`mt-0.5 text-sm ${celebration ? "font-medium text-accent" : "text-muted"}`}>
         {celebration ??
           (current === 0
             ? startHint
