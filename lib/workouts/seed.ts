@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DEFAULT_PLAN } from "./defaults";
+import type { WorkoutDay } from "./plan";
 
 // Copies your starting weekly plan into your account. Safe to run twice: days
 // that already exist are skipped, and exercises are only added to days created
@@ -26,4 +27,17 @@ export async function ensureDefaultPlan(supabase: SupabaseClient, userId: string
     }));
   });
   if (exercises.length > 0) await supabase.from("workout_exercises").insert(exercises);
+}
+
+// Loads your seven workout days (Mon-Sun), copying in the starting plan first if
+// this is your first visit.
+export async function loadWorkoutDays(supabase: SupabaseClient, userId: string): Promise<WorkoutDay[]> {
+  const load = async () =>
+    ((await supabase.from("workout_days").select("id, weekday, kind, title").order("weekday")).data ??
+      []) as WorkoutDay[];
+
+  const days = await load();
+  if (days.length > 0) return days;
+  await ensureDefaultPlan(supabase, userId);
+  return load();
 }

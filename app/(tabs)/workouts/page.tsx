@@ -2,26 +2,21 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ExtraCheck from "@/components/ExtraCheck";
-import FitnessSwitch from "@/components/FitnessSwitch";
+import FitnessHeader from "@/components/FitnessHeader";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
-import TodayPill from "@/components/TodayPill";
-import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
-import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
+import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import {
   connectorAfter,
   formatRest,
   formatSetsReps,
   type PlanExercise,
-  type WorkoutDay,
 } from "@/lib/workouts/plan";
+import { loadDoneDates } from "@/lib/workouts/activity";
 import { latestSets, type HistoryRow } from "@/lib/workouts/history";
 import { defaultRepsFor, defaultWeightFor } from "@/lib/workouts/logging";
-import { ensureDefaultPlan } from "@/lib/workouts/seed";
-
-const arrowClass =
-  "flex h-11 w-11 items-center justify-center rounded-full text-2xl text-muted active:bg-card";
+import { loadWorkoutDays } from "@/lib/workouts/seed";
 
 export default async function WorkoutsPage({
   searchParams,
@@ -37,18 +32,13 @@ export default async function WorkoutsPage({
   const userId = claims?.claims.sub;
   if (!userId) redirect("/login");
 
-  const loadDays = async () =>
-    ((await supabase.from("workout_days").select("id, weekday, kind, title").order("weekday")).data ??
-      []) as WorkoutDay[];
+  // Your weekly plan (copied in on your first visit), and every day you've logged a
+  // workout or cardio (for the streak and the green rings).
+  const [days, doneDates] = await Promise.all([
+    loadWorkoutDays(supabase, userId),
+    loadDoneDates(supabase, addDays(date, -400)),
+  ]);
 
-  // First visit: copy the starting weekly plan into this account.
-  let days = await loadDays();
-  if (days.length === 0) {
-    await ensureDefaultPlan(supabase, userId);
-    days = await loadDays();
-  }
-
-  const week = weekDays(date);
   const byWeekday = new Map(days.map((d) => [d.weekday, d]));
   const today = byWeekday.get(isoWeekday(date));
 
@@ -131,30 +121,7 @@ export default async function WorkoutsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Fitness</h1>
-        <TodayPill dateKey={date} href="/workouts" />
-      </div>
-
-      <FitnessSwitch current="lifting" date={date} />
-
-      <div className="flex items-center gap-1">
-        <Link href={`/workouts?date=${addDays(date, -7)}`} aria-label="Previous week" className={arrowClass}>
-          ‹
-        </Link>
-        <div className="min-w-0 flex-1">
-          <WorkoutWeekStrip
-            selected={date}
-            days={week.map((dateKey) => ({
-              dateKey,
-              kind: byWeekday.get(isoWeekday(dateKey))?.kind ?? null,
-            }))}
-          />
-        </div>
-        <Link href={`/workouts?date=${addDays(date, 7)}`} aria-label="Next week" className={arrowClass}>
-          ›
-        </Link>
-      </div>
+      <FitnessHeader current="lifting" date={date} days={days} doneDates={doneDates} />
 
       <section className="space-y-1">
         <h2 className="text-lg font-semibold">
