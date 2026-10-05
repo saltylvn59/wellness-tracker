@@ -4,9 +4,9 @@ import type { MetadataRoute } from "next";
 // and how it should look when launched from the home screen.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Wellness Tracker",
-    short_name: "Wellness",
-    description: "Track calories, macros, workouts, and cardio in one place.",
+    name: "DEVELOP",
+    short_name: "DEVELOP",
+    description: "DEVELOP: a wellness tracker for calories, macros, workouts, and cardio.",
     start_url: "/food",
     display: "standalone", // full-screen, like a native app
     background_color: "#ffffff",
