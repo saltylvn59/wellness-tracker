@@ -30,8 +30,8 @@ export function addDays(key: string, n: number): string {
   return toKey(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }
 
-/** 0 = weeks start on Sunday (US calendar). Use 1 for Monday. */
-export const WEEK_STARTS_ON = 0;
+/** 1 = weeks start on Monday. Use 0 for Sunday (US calendar). */
+export const WEEK_STARTS_ON = 1;
 
 /** The 7 date keys of the week that contains `key`, in order. */
 export function weekDays(key: string, weekStartsOn: number = WEEK_STARTS_ON): string[] {

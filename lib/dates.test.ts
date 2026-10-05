@@ -41,16 +41,16 @@ describe("addDays", () => {
 });
 
 describe("weekDays", () => {
-  it("lists Sunday through Saturday by default", () => {
+  it("lists Monday through Sunday by default", () => {
     // Oct 5, 2026 is a Monday
     expect(weekDays("2026-10-05")).toEqual([
-      "2026-10-04",
       "2026-10-05",
       "2026-10-06",
       "2026-10-07",
       "2026-10-08",
       "2026-10-09",
       "2026-10-10",
+      "2026-10-11",
     ]);
   });
 
@@ -59,27 +59,29 @@ describe("weekDays", () => {
     for (const day of week) expect(weekDays(day)).toEqual(week);
   });
 
-  it("starts a new week on Sunday", () => {
-    expect(weekDays("2026-10-04")[0]).toBe("2026-10-04"); // a Sunday
-    expect(weekDays("2026-10-10")[6]).toBe("2026-10-10"); // the Saturday before
-    expect(weekDays("2026-10-11")[0]).toBe("2026-10-11"); // next Sunday
+  it("starts a new week on Monday", () => {
+    expect(weekDays("2026-10-05")[0]).toBe("2026-10-05"); // a Monday
+    expect(weekDays("2026-10-04")[6]).toBe("2026-10-04"); // Sunday ends the week before
+    expect(weekDays("2026-10-04")).toEqual(weekDays("2026-09-28"));
+    expect(weekDays("2026-10-12")[0]).toBe("2026-10-12"); // next Monday
   });
 
-  it("can start on Monday instead", () => {
-    expect(weekDays("2026-10-05", 1)[0]).toBe("2026-10-05"); // Monday
-    expect(weekDays("2026-10-04", 1)).toEqual(weekDays("2026-09-29", 1)); // Sunday ends its week
-    expect(weekDays("2026-10-04", 1)[6]).toBe("2026-10-04");
+  it("can start on Sunday instead", () => {
+    expect(weekDays("2026-10-04", 0)[0]).toBe("2026-10-04"); // a Sunday
+    expect(weekDays("2026-10-10", 0)[6]).toBe("2026-10-10"); // Saturday ends it
+    expect(weekDays("2026-10-05", 0)[0]).toBe("2026-10-04");
   });
 
   it("crosses month and year boundaries", () => {
+    // Thursday, Dec 31, 2026
     expect(weekDays("2026-12-31")).toEqual([
-      "2026-12-27",
       "2026-12-28",
       "2026-12-29",
       "2026-12-30",
       "2026-12-31",
       "2027-01-01",
       "2027-01-02",
+      "2027-01-03",
     ]);
   });
 });
