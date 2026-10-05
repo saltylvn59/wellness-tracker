@@ -1,76 +1,100 @@
 import { ImageResponse } from "next/og";
 
-// The app icon, drawn in code (no image files). One drawing, two looks:
-//   "dark":  a glowing green W on a deep dark background (home screen, dark browser tabs)
-//   "light": a white W on an Apple-green gradient (light browser tabs)
-// The W is a single rounded line that rises and falls like a heartbeat.
+// The app icon, drawn in code (no image files): three progress rings, like a
+// fitness tracker, each partly filled. One drawing, two looks:
+//   "dark":  glowing green rings on a deep dark background (home screen, dark browser tabs)
+//   "light": white rings on an Apple-green gradient (light browser tabs)
 //
 // Note: the image renderer only allows plain SVG tags inside <svg> (no React
-// fragments or custom components), so the gradient stops are built with .map().
+// fragments or custom components), so everything is wrapped in <g> groups.
 
 export type IconVariant = "dark" | "light";
 
-// Points of the W on a 512 x 512 canvas.
-const W_PATH = "M104 160 L180 350 L256 214 L332 350 L408 160";
+// Outer, middle, inner ring: radius and how much of the circle is filled.
+const RINGS = [
+  { r: 172, fill: 0.78 },
+  { r: 124, fill: 0.62 },
+  { r: 76, fill: 0.46 },
+] as const;
 
-type Stop = [offset: string, color: string];
+const STROKE = 38;
 
 const LOOKS = {
   dark: {
-    background: [["0", "#0f1f15"], ["1", "#050605"]] as Stop[],
-    stroke: [["0", "#9bffb4"], ["1", "#30d158"]] as Stop[],
+    bgTop: "#0f1f15",
+    bgBottom: "#050605",
+    glow: true,
+    track: { color: "#30d158", opacity: 0.16 },
+    rings: [
+      { color: "#30d158", opacity: 1 },
+      { color: "#6cf08f", opacity: 1 },
+      { color: "#b5ffc9", opacity: 1 },
+    ],
   },
   light: {
-    background: [["0", "#4ddb73"], ["1", "#25a84a"]] as Stop[],
-    stroke: [["0", "#ffffff"], ["1", "#e9fff0"]] as Stop[],
+    bgTop: "#4ddb73",
+    bgBottom: "#25a84a",
+    glow: false,
+    track: { color: "#ffffff", opacity: 0.24 },
+    rings: [
+      { color: "#ffffff", opacity: 1 },
+      { color: "#ffffff", opacity: 0.88 },
+      { color: "#ffffff", opacity: 0.76 },
+    ],
   },
 };
 
-function stops(list: Stop[]) {
-  return list.map(([offset, color]) => <stop key={offset} offset={offset} stopColor={color} />);
-}
-
 function iconSvg(variant: IconVariant, size: number) {
   const look = LOOKS[variant];
-  const dark = variant === "dark";
 
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-          {stops(look.background)}
+          <stop offset="0" stopColor={look.bgTop} />
+          <stop offset="1" stopColor={look.bgBottom} />
         </linearGradient>
-        {/* soft light behind the W (dark version only) */}
+        {/* soft light behind the rings (dark version only) */}
         <radialGradient id="glow" cx="0.5" cy="0.46" r="0.55">
-          <stop offset="0" stopColor="#30d158" stopOpacity="0.42" />
+          <stop offset="0" stopColor="#30d158" stopOpacity="0.38" />
           <stop offset="1" stopColor="#30d158" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="stroke" x1="0" y1="0" x2="0" y2="1">
-          {stops(look.stroke)}
-        </linearGradient>
       </defs>
 
       <rect width="512" height="512" fill="url(#bg)" />
-      <rect width="512" height="512" fill="url(#glow)" fillOpacity={dark ? 1 : 0} />
+      <rect width="512" height="512" fill="url(#glow)" fillOpacity={look.glow ? 1 : 0} />
 
-      {/* a wider, fainter copy of the W underneath gives it a neon edge */}
-      <path
-        d={W_PATH}
-        fill="none"
-        stroke="#30d158"
-        strokeOpacity={dark ? 0.28 : 0}
-        strokeWidth="72"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d={W_PATH}
-        fill="none"
-        stroke="url(#stroke)"
-        strokeWidth="46"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {RINGS.map(({ r, fill }, index) => {
+        const circumference = 2 * Math.PI * r;
+        const ring = look.rings[index];
+        return (
+          <g key={r}>
+            {/* the faint full circle behind each ring */}
+            <circle
+              cx="256"
+              cy="256"
+              r={r}
+              fill="none"
+              stroke={look.track.color}
+              strokeOpacity={look.track.opacity}
+              strokeWidth={STROKE}
+            />
+            {/* the filled part, starting at the top and going clockwise */}
+            <circle
+              cx="256"
+              cy="256"
+              r={r}
+              fill="none"
+              stroke={ring.color}
+              strokeOpacity={ring.opacity}
+              strokeWidth={STROKE}
+              strokeLinecap="round"
+              strokeDasharray={`${circumference * fill} ${circumference}`}
+              transform="rotate(-90 256 256)"
+            />
+          </g>
+        );
+      })}
     </svg>
   );
 }
