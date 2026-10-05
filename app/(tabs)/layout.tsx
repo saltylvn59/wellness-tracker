@@ -1,7 +1,7 @@
 import TabBar from "@/components/TabBar";
 
 // (tabs) is a "route group": the parentheses mean the folder name is NOT part
-// of the URL, so /food, /workouts and /cardio all share this layout (the tab bar).
+// of the URL, so /food, /workouts and /settings all share this layout (the tab bar).
 export default function TabsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>

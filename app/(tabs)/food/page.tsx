@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import DayHeader from "@/components/DayHeader";
 import GoToToday from "@/components/GoToToday";
 import MacroStat from "@/components/MacroStat";
+import StreakBadge from "@/components/StreakBadge";
 import WeekStrip, { type WeekDay } from "@/components/WeekStrip";
-import { isValidDateKey, weekDays } from "@/lib/dates";
+import { addDays, isValidDateKey, weekDays } from "@/lib/dates";
 import { MEAL_LABELS, MEAL_TYPES, sumEntries, type FoodEntry } from "@/lib/food";
+import { loadFoodLogDates } from "@/lib/foodStreak";
 import { getGoalStatus } from "@/lib/goalStatus";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,7 +30,7 @@ export default async function FoodPage({
   // Fetch your goal and the whole week's entries at the same time.
   // (One query covers all 7 days: the week strip needs each day's total.)
   const week = weekDays(date);
-  const [{ data: profile }, { data: rows }] = await Promise.all([
+  const [{ data: profile }, { data: rows }, foodDates] = await Promise.all([
     supabase
       .from("profiles")
       .select("calorie_goal, protein_goal_g, carb_goal_g, fat_goal_g")
@@ -40,6 +42,8 @@ export default async function FoodPage({
       .gte("entry_date", week[0])
       .lte("entry_date", week[6])
       .order("created_at", { ascending: true }),
+    // Every day you've logged food, for the streak.
+    loadFoodLogDates(supabase, addDays(date, -400)),
   ]);
 
   const goal: number | null = profile?.calorie_goal ?? null;
@@ -65,6 +69,12 @@ export default async function FoodPage({
 
   return (
     <div className="space-y-6">
+      <StreakBadge
+        doneDates={foodDates}
+        restWeekdays={[]}
+        label="Food logging streak"
+        startHint="Log a meal or snack today to start one."
+      />
       <WeekStrip days={weekSummary} selected={date} goal={goal} />
       <DayHeader dateKey={date} status={status} />
 
