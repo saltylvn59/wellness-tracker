@@ -10,18 +10,25 @@ export const MEAL_LABELS: Record<MealType, string> = {
   snack: "Snacks",
 };
 
-// One row of the food_entries table.
-export type FoodEntry = {
-  id: string;
-  entry_date: string; // "YYYY-MM-DD"
-  meal_type: MealType;
+// The nutrition facts shared by logged foods and saved foods.
+export type Nutrition = {
   name: string;
   calories: number;
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+};
+
+// One row of the food_entries table.
+export type FoodEntry = Nutrition & {
+  id: string;
+  entry_date: string; // "YYYY-MM-DD"
+  meal_type: MealType;
   source: "manual" | "text" | "photo";
 };
+
+// One row of the saved_foods table (your personal library).
+export type SavedFood = Nutrition & { id: string };
 
 export type Totals = { calories: number; protein_g: number; carbs_g: number; fat_g: number };
 
@@ -37,16 +44,9 @@ export function sumEntries(entries: Pick<FoodEntry, keyof Totals>[]): Totals {
   );
 }
 
-export type FoodValues = {
-  entry_date: string;
-  meal_type: MealType;
-  name: string;
-  calories: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-};
+export type NutritionResult = { ok: true; values: Nutrition } | { ok: false; message: string };
 
+export type FoodValues = Nutrition & { entry_date: string; meal_type: MealType };
 export type ParseResult = { ok: true; values: FoodValues } | { ok: false; message: string };
 
 // Reads a number from a form field. Blank -> `blank` (or an error if null),
@@ -66,21 +66,12 @@ function readNumber(
   return rounded < min || rounded > max ? "invalid" : rounded;
 }
 
-// Never trust the browser: this runs on the server before anything is saved.
-export function parseFoodForm(formData: FormData): ParseResult {
+// Checks the name, calories, and macros. Used by both logging a food and
+// saving one to your library. Never trust the browser: this runs on the server.
+export function parseNutritionForm(formData: FormData): NutritionResult {
   const name = String(formData.get("name") ?? "").trim();
   if (name.length < 1 || name.length > 200) {
     return { ok: false, message: "Enter a name (up to 200 characters)." };
-  }
-
-  const meal = String(formData.get("meal_type") ?? "");
-  if (!(MEAL_TYPES as readonly string[]).includes(meal)) {
-    return { ok: false, message: "Choose a meal." };
-  }
-
-  const entryDate = String(formData.get("entry_date") ?? "");
-  if (!isValidDateKey(entryDate)) {
-    return { ok: false, message: "Choose a valid date." };
   }
 
   const calories = readNumber(formData.get("calories"), 0, 10000, null);
@@ -101,8 +92,26 @@ export function parseFoodForm(formData: FormData): ParseResult {
     macros[key] = value;
   }
 
+  return { ok: true, values: { name, calories, ...macros } };
+}
+
+// Everything above, plus which meal and which day.
+export function parseFoodForm(formData: FormData): ParseResult {
+  const nutrition = parseNutritionForm(formData);
+  if (!nutrition.ok) return nutrition;
+
+  const meal = String(formData.get("meal_type") ?? "");
+  if (!(MEAL_TYPES as readonly string[]).includes(meal)) {
+    return { ok: false, message: "Choose a meal." };
+  }
+
+  const entryDate = String(formData.get("entry_date") ?? "");
+  if (!isValidDateKey(entryDate)) {
+    return { ok: false, message: "Choose a valid date." };
+  }
+
   return {
     ok: true,
-    values: { entry_date: entryDate, meal_type: meal as MealType, name, calories, ...macros },
+    values: { ...nutrition.values, entry_date: entryDate, meal_type: meal as MealType },
   };
 }

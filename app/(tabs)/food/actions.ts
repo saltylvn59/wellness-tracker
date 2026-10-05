@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isValidDateKey } from "@/lib/dates";
 import { parseFoodForm } from "@/lib/food";
+import { upsertSavedFood } from "@/lib/savedFoods";
 
 export type FormState = { message: string } | null;
 
@@ -30,6 +31,15 @@ export async function saveFoodEntry(
           .insert({ ...parsed.values, user_id: userId, source: "manual" });
 
   if (error) return { message: "Couldn't save. Please try again." };
+
+  // "Save to my foods" toggle: also keep this food in your Saved foods library.
+  // If a saved food with the same name exists, it's updated instead of duplicated.
+  // (A problem here never blocks the entry above from being saved.)
+  if (formData.get("save_food") === "on") {
+    const { name, calories, protein_g, carbs_g, fat_g } = parsed.values;
+    await upsertSavedFood(supabase, userId, { name, calories, protein_g, carbs_g, fat_g });
+    revalidatePath("/food/saved");
+  }
 
   revalidatePath("/food");
   // redirect() must run outside try/catch, so it sits last.
