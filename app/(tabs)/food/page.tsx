@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import DayHeader from "@/components/DayHeader";
 import GoToToday from "@/components/GoToToday";
+import MacroStat from "@/components/MacroStat";
 import WeekStrip, { type WeekDay } from "@/components/WeekStrip";
 import { isValidDateKey, weekDays } from "@/lib/dates";
 import { MEAL_LABELS, MEAL_TYPES, sumEntries, type FoodEntry } from "@/lib/food";
@@ -28,7 +29,11 @@ export default async function FoodPage({
   // (One query covers all 7 days: the week strip needs each day's total.)
   const week = weekDays(date);
   const [{ data: profile }, { data: rows }] = await Promise.all([
-    supabase.from("profiles").select("calorie_goal").eq("id", userId).maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("calorie_goal, protein_goal_g, carb_goal_g, fat_goal_g")
+      .eq("id", userId)
+      .maybeSingle(),
     supabase
       .from("food_entries")
       .select("id, entry_date, meal_type, name, calories, protein_g, carbs_g, fat_g, source")
@@ -38,6 +43,12 @@ export default async function FoodPage({
   ]);
 
   const goal: number | null = profile?.calorie_goal ?? null;
+  const macroGoals = {
+    protein: (profile?.protein_goal_g ?? null) as number | null,
+    carbs: (profile?.carb_goal_g ?? null) as number | null,
+    fat: (profile?.fat_goal_g ?? null) as number | null,
+  };
+  const hasMacroGoals = Object.values(macroGoals).some((g) => g !== null);
   const weekEntries = (rows ?? []) as FoodEntry[];
   const weekSummary: WeekDay[] = week.map((dateKey) => {
     const dayEntries = weekEntries.filter((e) => e.entry_date === dateKey);
@@ -99,20 +110,19 @@ export default async function FoodPage({
           </p>
         )}
 
-        <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center">
-          {(
-            [
-              ["Protein", totals.protein_g],
-              ["Carbs", totals.carbs_g],
-              ["Fat", totals.fat_g],
-            ] as const
-          ).map(([label, grams]) => (
-            <div key={label}>
-              <dt className="text-xs text-muted">{label}</dt>
-              <dd className="text-base font-semibold">{fmt(grams)} g</dd>
-            </div>
-          ))}
+        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-3 text-center">
+          <MacroStat label="Protein" grams={totals.protein_g} goal={macroGoals.protein} />
+          <MacroStat label="Carbs" grams={totals.carbs_g} goal={macroGoals.carbs} />
+          <MacroStat label="Fat" grams={totals.fat_g} goal={macroGoals.fat} />
         </dl>
+        {!hasMacroGoals && (
+          <p className="mt-3 text-center text-xs text-muted">
+            <Link href="/settings" className="font-medium text-accent underline">
+              Set macro goals
+            </Link>{" "}
+            to see progress for each.
+          </p>
+        )}
       </section>
 
       <Link

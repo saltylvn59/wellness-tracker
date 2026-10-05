@@ -1,0 +1,86 @@
+"use client";
+
+import { useActionState } from "react";
+import { saveGoals, type SaveResult } from "@/app/(tabs)/settings/actions";
+import type { Goals } from "@/lib/goals";
+
+// text-base = 16px: smaller text makes iPhone Safari zoom in when you tap a field.
+const inputClass =
+  "min-h-12 w-full rounded-xl border border-border bg-background px-4 text-base";
+const labelClass = "mb-1 block text-sm font-medium text-muted";
+
+export default function GoalsForm({ goals }: { goals: Goals }) {
+  // useActionState connects the form to the server action and gives us its reply.
+  const [result, formAction, pending] = useActionState<SaveResult, FormData>(saveGoals, null);
+
+  return (
+    <form action={formAction} className="space-y-5">
+      <div>
+        <label htmlFor="calorie_goal" className={labelClass}>
+          Daily calorie goal
+        </label>
+        <input
+          id="calorie_goal"
+          name="calorie_goal"
+          type="number"
+          inputMode="numeric"
+          min={500}
+          max={10000}
+          step={1}
+          defaultValue={goals.calorie_goal ?? ""}
+          placeholder="e.g. 2000"
+          required
+          className={inputClass}
+        />
+      </div>
+
+      <fieldset>
+        <legend className="mb-1 text-sm font-medium text-muted">
+          Daily macro goals <span className="font-normal">(optional, in grams)</span>
+        </legend>
+        <div className="grid grid-cols-3 gap-3">
+          {(
+            [
+              ["protein_goal_g", "Protein", goals.protein_goal_g, 1000],
+              ["carb_goal_g", "Carbs", goals.carb_goal_g, 2000],
+              ["fat_goal_g", "Fat", goals.fat_goal_g, 1000],
+            ] as const
+          ).map(([name, label, value, max]) => (
+            <div key={name}>
+              <label htmlFor={name} className="mb-1 block text-xs text-muted">
+                {label}
+              </label>
+              <input
+                id={name}
+                name={name}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={max}
+                step={1}
+                defaultValue={value ?? ""}
+                placeholder="g"
+                className={inputClass}
+              />
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted">Leave a macro blank if you don&apos;t want a goal for it.</p>
+      </fieldset>
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="min-h-12 w-full rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-60"
+      >
+        {pending ? "Saving…" : "Save goals"}
+      </button>
+
+      {result && (
+        <p role="status" className={`text-sm ${result.ok ? "text-accent" : "text-danger"}`}>
+          {result.message}
+        </p>
+      )}
+    </form>
+  );
+}
