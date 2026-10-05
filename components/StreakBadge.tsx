@@ -6,14 +6,19 @@ import { computeStreak, milestoneMessage, nextMilestone } from "@/lib/streak";
 
 const noSubscribe = () => () => {};
 
-// Your workout streak. It needs to know today's date on YOUR phone, so it works
-// it out in the browser and shows a placeholder-sized blank until then.
+// A streak badge, used for both workouts (Fitness) and food logging (Nutrition).
+// It needs to know today's date on YOUR phone, so it works it out in the browser
+// and shows a placeholder-sized blank until then.
 export default function StreakBadge({
   doneDates,
   restWeekdays,
+  label = "Workout streak",
+  startHint = "Log a workout or cardio today to start one.",
 }: {
-  doneDates: string[];
-  restWeekdays: number[]; // 1 = Monday ... 7 = Sunday
+  doneDates: string[]; // dates you logged something
+  restWeekdays: number[]; // 1 = Monday ... 7 = Sunday; these days never break a streak
+  label?: string; // read aloud by screen readers
+  startHint?: string; // shown when you have no streak yet
 }) {
   const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
   if (!today) return <div className="h-[72px]" aria-hidden="true" />; // keeps the layout steady
@@ -24,7 +29,7 @@ export default function StreakBadge({
 
   return (
     <section
-      aria-label="Workout streak"
+      aria-label={label}
       className={`rounded-2xl px-4 py-3 ${current > 0 ? "bg-accent text-on-accent" : "bg-card"}`}
     >
       <div className="flex items-center justify-between gap-3">
@@ -39,7 +44,7 @@ export default function StreakBadge({
       <p className={`mt-0.5 text-sm ${current > 0 ? "opacity-90" : "text-muted"}`}>
         {celebration ??
           (current === 0
-            ? "Log a workout or cardio today to start one."
+            ? startHint
             : !doneToday
               ? "Log today to keep it going."
               : next
