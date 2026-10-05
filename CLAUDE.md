@@ -1,14 +1,16 @@
 # Wellness Tracker
 
-An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting workouts, and running/cycling goals. The owner is a beginner learning web development with Claude Code, so **explain what each change does and why**, and build in small steps.
+An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting workouts, and cardio (run, cycle, swim). The owner is a beginner learning web development with Claude Code, so **explain what each change does and why**, and build in small steps.
 
 ## Features
 - **Food log:** add food by photo or typed description; AI estimates calories and macros (always editable). Daily totals vs calorie goal.
 - **Macro goals:** optional protein/carb/fat goals; the Food tab shows each as `eaten / goal g` with a progress bar.
 - **Header:** today's date in a circle: green if at/under calorie goal, red if over.
-- **Streaks:** consecutive days with at least one logged food entry (user's timezone).
-- **Workouts:** weekly plan: Sunday = rest; Monday = Chest and Back; Wednesday = Legs; Friday = Delts and Arms; Tuesday, Thursday, Saturday = cardio. Each lifting day has the user's own exercise list (editable); for each exercise the user enters their own sets and rep range, and logs weight/reps per set.
-- **Cardio:** log runs and rides; weekly/monthly distance goals.
+- **Streaks 🔥:** Nutrition: consecutive days with at least one food entry. Fitness: consecutive days with logged lifting sets or cardio; the Sunday rest day neither breaks nor adds to it; today doesn't break it until the day is over. Shown as a badge with best streak and milestone celebrations; computed in the browser from the user's local date (`lib/streak.ts`).
+- **Fitness tab (one page, driven by the week calendar):** green ring and a check on every day with a logged workout or cardio. Weekly plan: Sunday = rest; Monday = Chest and Back; Wednesday = Legs; Friday = Delts and Arms; Tuesday, Thursday, Saturday = cardio.
+  - **Lifting days:** Sauna (10 min checkbox, start of workout) and Stretch (10 min checkbox, end of workout), both on the right of their cards; the user's own editable exercise list; supersets shown as a marker between exercises, 3-5 min rest reminders; per exercise the user enters their own sets and rep range, and a Log button opens a sheet with scroll wheels for weight (2.5 lb steps) and reps; last time, today's sets, and heaviest weight show on each card; weight defaults: last used, else 100 lb, dumbbell exercises 25 lb.
+  - **Cardio days:** Log run / cycle / swim, each with optional distance (miles for run and cycle, yards for swim) and time; add and delete. Weekly distance goals are not built (the user asked to keep it simple).
+- **Tabs:** two bottom tabs, Nutrition (`/food`) and Fitness (`/workouts`).
 
 ## Stack
 Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, storage), Google Gemini free tier for AI food estimates (server-side only, via `lib/ai/gemini.ts`, the one swappable provider file), deployed on Vercel.
@@ -37,7 +39,7 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 3. Manual food log + daily view + date circle ✅ + Add food hub (Saved foods library) ✅ + macro goals ✅ (add/edit/delete, green/red circle, Mon-Sun week strip, vitest tests)
 4. AI text estimate ✅ ("Describe your food"; Gemini free tier, 40/day per user)
 5. AI photo estimate ✅ ("Take a picture"; photos resized in-browser, never stored; photo flow still to be tried on a real iPhone)
-6. Streaks
+6. Streaks ✅ (Fitness and Nutrition badges, best streak, milestones, calendar rings)
 7. Workouts ✅ (weekly plan; editable exercises with own sets/rep ranges; supersets and 3-5 min rest reminders; Log button with scroll wheels for weight and reps; last time, today's sets, and heaviest weight on each card; weight defaults: last used, else 100 lb, dumbbell 25 lb)
-8. Cardio + goals
-9. Polish and real-iPhone testing
+8. Cardio ✅ (run/cycle/swim with optional distance and time, under the cardio days; weekly distance goals skipped for now)
+9. Polish and real-iPhone testing (still to do: try photo logging, scroll wheels, and the checkboxes on a real iPhone)
