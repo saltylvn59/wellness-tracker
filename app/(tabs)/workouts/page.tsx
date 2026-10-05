@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import FitnessSwitch from "@/components/FitnessSwitch";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
 import SaunaLog from "@/components/SaunaLog";
@@ -132,9 +133,11 @@ export default async function WorkoutsPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Workouts</h1>
+        <h1 className="text-2xl font-bold">Fitness</h1>
         <TodayPill dateKey={date} href="/workouts" />
       </div>
+
+      <FitnessSwitch current="lifting" date={date} />
 
       <div className="flex items-center gap-1">
         <Link href={`/workouts?date=${addDays(date, -7)}`} aria-label="Previous week" className={arrowClass}>

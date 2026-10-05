@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Two tabs. Fitness covers both lifting (/workouts) and cardio (/cardio).
 const tabs = [
-  { href: "/food", label: "Food", icon: "🍎" },
-  { href: "/workouts", label: "Workouts", icon: "🏋️" },
-  { href: "/cardio", label: "Cardio", icon: "🏃" },
+  { href: "/food", matches: ["/food"], label: "Nutrition", icon: "🍎" },
+  { href: "/workouts", matches: ["/workouts", "/cardio"], label: "Fitness", icon: "🏋️" },
 ];
 
 // "use client" (above) means this runs in the browser, which we need here
@@ -23,7 +23,7 @@ export default function TabBar() {
     >
       <ul className="mx-auto flex max-w-md">
         {tabs.map((tab) => {
-          const active = pathname.startsWith(tab.href);
+          const active = tab.matches.some((path) => pathname.startsWith(path));
           return (
             <li key={tab.href} className="flex-1">
               <Link
