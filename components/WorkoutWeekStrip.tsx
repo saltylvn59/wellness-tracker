@@ -21,7 +21,7 @@ export default function WorkoutWeekStrip({
 }: {
   days: WorkoutStripDay[];
   selected: string;
-  basePath: string; // "/workouts" or "/cardio"
+  basePath: string; // the page the days link to, e.g. "/workouts"
 }) {
   return (
     <nav aria-label="Week" className="flex gap-1">

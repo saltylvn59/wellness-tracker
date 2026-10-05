@@ -37,8 +37,7 @@ export async function logCardio(input: {
   });
   if (error) return FAILED;
 
-  revalidatePath("/cardio");
-  revalidatePath("/workouts"); // the streak and week rings use cardio too
+  revalidatePath("/workouts"); // the cardio list, the streak, and the week rings all live here
   return { ok: true };
 }
 
@@ -50,7 +49,6 @@ export async function deleteCardio(id: string): Promise<CardioResult> {
   const { error } = await supabase.from("cardio_logs").delete().eq("id", id);
   if (error) return FAILED;
 
-  revalidatePath("/cardio");
   revalidatePath("/workouts");
   return { ok: true };
 }

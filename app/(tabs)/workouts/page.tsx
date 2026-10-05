@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import CardioLogger, { type CardioLogRow } from "@/components/CardioLogger";
 import ExtraCheck from "@/components/ExtraCheck";
 import FitnessHeader from "@/components/FitnessHeader";
 import GoToToday from "@/components/GoToToday";
@@ -50,6 +51,23 @@ export default async function WorkoutsPage({
       .eq("day_id", today.id)
       .order("position", { ascending: true });
     exercises = (data ?? []) as PlanExercise[];
+  }
+
+  // Cardio logged on this date (cardio days only).
+  let cardioLogs: CardioLogRow[] = [];
+  if (today?.kind === "cardio") {
+    const { data } = await supabase
+      .from("cardio_logs")
+      .select("id, kind, distance, distance_unit, duration_minutes")
+      .eq("log_date", date)
+      .order("created_at", { ascending: true });
+    cardioLogs = (data ?? []).map((row) => ({
+      id: row.id as string,
+      kind: row.kind as CardioLogRow["kind"],
+      distance: row.distance === null ? null : Number(row.distance),
+      unit: row.distance_unit as string | null,
+      minutes: row.duration_minutes === null ? null : Number(row.duration_minutes),
+    }));
   }
 
   // Whether today's sauna and stretch are ticked (lifting days only).
@@ -121,7 +139,7 @@ export default async function WorkoutsPage({
 
   return (
     <div className="space-y-6">
-      <FitnessHeader current="lifting" date={date} days={days} doneDates={doneDates} />
+      <FitnessHeader date={date} days={days} doneDates={doneDates} />
 
       <section className="space-y-1">
         <h2 className="text-lg font-semibold">
@@ -147,23 +165,7 @@ export default async function WorkoutsPage({
         </section>
       )}
 
-      {today?.kind === "cardio" && (
-        <section className="rounded-2xl bg-card p-6 text-center">
-          <p className="text-4xl" aria-hidden="true">
-            🏃
-          </p>
-          <p className="mt-2 text-base font-semibold">Cardio day</p>
-          <p className="mt-1 text-sm text-muted">
-            A run or a ride today. Logging distance and goals is coming in the Cardio tab.
-          </p>
-          <Link
-            href="/cardio"
-            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-5 text-base font-medium active:opacity-80"
-          >
-            Open Cardio
-          </Link>
-        </section>
-      )}
+      {today?.kind === "cardio" && <CardioLogger date={date} logs={cardioLogs} />}
 
       {today?.kind === "lift" && (
         <section className="space-y-3">

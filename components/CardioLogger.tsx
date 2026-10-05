@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import BottomSheet from "@/components/BottomSheet";
-import { deleteCardio, logCardio } from "@/app/(tabs)/cardio/actions";
+import { deleteCardio, logCardio } from "@/app/(tabs)/workouts/cardio-actions";
 import {
   CARDIO,
   CARDIO_KINDS,
