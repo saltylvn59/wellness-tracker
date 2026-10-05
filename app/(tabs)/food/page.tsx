@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import DayHeader from "@/components/DayHeader";
+import CalorieRing from "@/components/CalorieRing";
 import GoToToday from "@/components/GoToToday";
-import MacroStat from "@/components/MacroStat";
-import StreakBadge from "@/components/StreakBadge";
+import MacroRow from "@/components/MacroRow";
+import NutritionHeader from "@/components/NutritionHeader";
 import WaterTracker from "@/components/WaterTracker";
-import WeekStrip, { type WeekDay } from "@/components/WeekStrip";
+import { type WeekDay } from "@/components/WeekStrip";
 import { addDays, isValidDateKey, weekDays } from "@/lib/dates";
 import { MEAL_LABELS, MEAL_TYPES, sumEntries, type FoodEntry } from "@/lib/food";
 import { loadFoodLogDates } from "@/lib/foodStreak";
@@ -69,66 +69,36 @@ export default async function FoodPage({
   const entries = weekEntries.filter((e) => e.entry_date === date);
   const totals = sumEntries(entries);
   const status = getGoalStatus(totals.calories, goal);
-  const progress = goal ? Math.min(100, (totals.calories / goal) * 100) : 0;
 
   return (
     <div className="space-y-6">
-      <StreakBadge
-        doneDates={foodDates}
-        restWeekdays={[]}
-        label="Food logging streak"
-        startHint="Log a meal or snack today to start one."
-      />
-      <WeekStrip days={weekSummary} selected={date} goal={goal} />
-      <DayHeader dateKey={date} status={status} />
+      <NutritionHeader date={date} goal={goal} week={weekSummary} foodDates={foodDates} />
 
       <section className="rounded-2xl bg-card p-4">
-        <div className="flex items-baseline justify-between">
-          <p className="text-3xl font-bold">
-            {fmt(totals.calories)} <span className="text-base font-medium text-muted">kcal</span>
-          </p>
-          {goal && (
-            <p className="text-sm text-muted">
-              {totals.calories > goal ? (
-                <span className="font-medium text-danger">{fmt(totals.calories - goal)} over</span>
+        <div className="flex items-center gap-4">
+          <div className="shrink-0 text-center">
+            <CalorieRing calories={totals.calories} goal={goal} status={status} />
+            <p className="mt-1 text-xs">
+              {goal ? (
+                totals.calories > goal ? (
+                  <span className="font-semibold text-danger">{fmt(totals.calories - goal)} over</span>
+                ) : (
+                  <span className="text-muted">{fmt(goal - totals.calories)} left</span>
+                )
               ) : (
-                <span>{fmt(goal - totals.calories)} left</span>
+                <Link href="/settings" className="font-medium text-accent underline">
+                  Set a calorie goal
+                </Link>
               )}
             </p>
-          )}
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-3">
+            <MacroRow label="Protein" grams={totals.protein_g} goal={macroGoals.protein} />
+            <MacroRow label="Carbs" grams={totals.carbs_g} goal={macroGoals.carbs} />
+            <MacroRow label="Fat" grams={totals.fat_g} goal={macroGoals.fat} />
+          </div>
         </div>
-
-        {goal ? (
-          <>
-            <div
-              role="progressbar"
-              aria-label="Calories toward daily goal"
-              aria-valuemin={0}
-              aria-valuemax={goal}
-              aria-valuenow={totals.calories}
-              className="mt-3 h-2 overflow-hidden rounded-full bg-border"
-            >
-              <div
-                className={`h-full rounded-full ${status === "over" ? "bg-danger" : "bg-accent"}`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="mt-2 text-sm text-muted">Daily goal: {fmt(goal)} kcal</p>
-          </>
-        ) : (
-          <p className="mt-2 text-sm text-muted">
-            Daily goal not set yet.{" "}
-            <Link href="/settings" className="font-medium text-accent underline">
-              Set it in Settings
-            </Link>
-          </p>
-        )}
-
-        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-3 text-center">
-          <MacroStat label="Protein" grams={totals.protein_g} goal={macroGoals.protein} />
-          <MacroStat label="Carbs" grams={totals.carbs_g} goal={macroGoals.carbs} />
-          <MacroStat label="Fat" grams={totals.fat_g} goal={macroGoals.fat} />
-        </dl>
         {!hasMacroGoals && (
           <p className="mt-3 text-center text-xs text-muted">
             <Link href="/settings" className="font-medium text-accent underline">
