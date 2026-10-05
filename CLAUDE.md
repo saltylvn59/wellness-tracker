@@ -1,4 +1,4 @@
-# Wellness Tracker
+# DEVELOP (wellness tracker)
 
 An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting workouts, and cardio (run, cycle, swim). The owner is a beginner learning web development with Claude Code, so **explain what each change does and why**, and build in small steps.
 

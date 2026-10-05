@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SettingsGear from "@/components/SettingsGear";
 import StreakBadge from "@/components/StreakBadge";
 import TodayPill from "@/components/TodayPill";
 import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
@@ -28,7 +29,10 @@ export default function FitnessHeader({
     <header className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Fitness</h1>
-        <TodayPill dateKey={date} href={basePath} />
+        <div className="flex items-center gap-1">
+          <TodayPill dateKey={date} href={basePath} />
+          <SettingsGear />
+        </div>
       </div>
 
       <StreakBadge doneDates={doneDates} restWeekdays={restWeekdays} />

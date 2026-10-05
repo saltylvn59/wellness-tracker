@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import SplashScreen from "@/components/SplashScreen";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,11 +11,11 @@ const geistSans = Geist({
 // <head> info: the browser tab title, and the settings iPhone Safari reads
 // when you tap "Add to Home Screen".
 export const metadata: Metadata = {
-  title: "Wellness Tracker",
-  description: "Track calories, macros, workouts, and cardio in one place.",
+  title: "DEVELOP",
+  description: "DEVELOP: a wellness tracker for calories, macros, workouts, and cardio.",
   appleWebApp: {
     capable: true, // open full-screen (no Safari toolbars) from the home screen
-    title: "Wellness",
+    title: "DEVELOP", // the label under the home-screen icon
     statusBarStyle: "default",
   },
 };
@@ -30,10 +31,23 @@ export const viewport: Viewport = {
   ],
 };
 
+// Runs before the page paints. The launch splash should show once each time the app
+// is opened, not on every page load: the first time in a session we remember that we
+// showed it (sessionStorage lives until the app is fully closed), and later loads add
+// the "no-splash" class so the splash stays hidden.
+const SPLASH_ONCE_SCRIPT = `try{var d=document.documentElement;if(sessionStorage.getItem("develop-splash")){d.classList.add("no-splash")}else{sessionStorage.setItem("develop-splash","1")}}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    // suppressHydrationWarning: the script above adds a class to <html> before React starts.
+    <html lang="en" className={`${geistSans.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_ONCE_SCRIPT }} />
+      </head>
+      <body className="min-h-full flex flex-col">
+        <SplashScreen />
+        {children}
+      </body>
     </html>
   );
 }
