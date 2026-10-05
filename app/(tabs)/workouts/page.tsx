@@ -6,7 +6,9 @@ import ExtraCheck from "@/components/ExtraCheck";
 import FitnessHeader from "@/components/FitnessHeader";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
-import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey } from "@/lib/dates";
+import WeeklyCardioGoals from "@/components/WeeklyCardioGoals";
+import { weeklyTotals, type WeeklyGoals } from "@/lib/cardioGoals";
+import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import {
   connectorAfter,
@@ -53,9 +55,38 @@ export default async function WorkoutsPage({
     exercises = (data ?? []) as PlanExercise[];
   }
 
-  // Cardio logged on this date (cardio days only).
+  // Cardio logged on this date, plus this week's totals and your weekly goals (cardio days only).
   let cardioLogs: CardioLogRow[] = [];
+  let weekTotals = { run: 0, cycle: 0, swim: 0 };
+  let weeklyGoals: WeeklyGoals = { run: null, cycle: null, swim: null };
   if (today?.kind === "cardio") {
+    const week = weekDays(date);
+    const [{ data: weekLogs }, { data: goalsRow }] = await Promise.all([
+      supabase
+        .from("cardio_logs")
+        .select("kind, distance, distance_unit")
+        .gte("log_date", week[0])
+        .lte("log_date", week[6]),
+      supabase
+        .from("profiles")
+        .select("weekly_run_miles, weekly_cycle_miles, weekly_swim_yards")
+        .eq("id", userId)
+        .maybeSingle(),
+    ]);
+    weekTotals = weeklyTotals(
+      (weekLogs ?? []).map((row) => ({
+        kind: row.kind as string,
+        distance: row.distance === null ? null : Number(row.distance),
+        distance_unit: row.distance_unit as string | null,
+      })),
+    );
+    const asNumber = (value: unknown) => (value === null || value === undefined ? null : Number(value));
+    weeklyGoals = {
+      run: asNumber(goalsRow?.weekly_run_miles),
+      cycle: asNumber(goalsRow?.weekly_cycle_miles),
+      swim: asNumber(goalsRow?.weekly_swim_yards),
+    };
+
     const { data } = await supabase
       .from("cardio_logs")
       .select("id, kind, distance, distance_unit, duration_minutes")
@@ -165,7 +196,12 @@ export default async function WorkoutsPage({
         </section>
       )}
 
-      {today?.kind === "cardio" && <CardioLogger date={date} logs={cardioLogs} />}
+      {today?.kind === "cardio" && (
+        <>
+          <CardioLogger date={date} logs={cardioLogs} />
+          <WeeklyCardioGoals totals={weekTotals} goals={weeklyGoals} />
+        </>
+      )}
 
       {today?.kind === "lift" && (
         <section className="space-y-3">

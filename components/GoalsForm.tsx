@@ -68,6 +68,37 @@ export default function GoalsForm({ goals }: { goals: Goals }) {
         <p className="mt-2 text-xs text-muted">Leave a macro blank if you don&apos;t want a goal for it.</p>
       </fieldset>
 
+      <fieldset>
+        <legend className="mb-1 text-sm font-medium text-muted">
+          Weekly cardio goals <span className="font-normal">(optional, Monday to Sunday)</span>
+        </legend>
+        <div className="grid grid-cols-3 gap-3">
+          {(
+            [
+              ["weekly_run_miles", "Run (mi)", goals.weekly_run_miles, "decimal"],
+              ["weekly_cycle_miles", "Cycle (mi)", goals.weekly_cycle_miles, "decimal"],
+              ["weekly_swim_yards", "Swim (yd)", goals.weekly_swim_yards, "numeric"],
+            ] as const
+          ).map(([name, label, value, mode]) => (
+            <div key={name}>
+              <label htmlFor={name} className="mb-1 block text-xs text-muted">
+                {label}
+              </label>
+              <input
+                id={name}
+                name={name}
+                type="text"
+                inputMode={mode}
+                defaultValue={value ?? ""}
+                placeholder="none"
+                className={inputClass}
+              />
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted">Leave one blank if you don&apos;t want a goal for it.</p>
+      </fieldset>
+
       <button
         type="submit"
         disabled={pending}

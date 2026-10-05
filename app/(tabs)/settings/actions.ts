@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { DATABASE_BEHIND_MESSAGE, isMissingSchemaError } from "@/lib/dbErrors";
 import { parseGoalsForm } from "@/lib/goals";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,7 +23,12 @@ export async function saveGoals(_previous: SaveResult, formData: FormData): Prom
   // Row Level Security in the database also enforces "only your own row".
   const { error } = await supabase.from("profiles").update(parsed.values).eq("id", userId);
 
-  if (error) return { ok: false, message: "Couldn't save. Please try again." };
+  if (error) {
+    return {
+      ok: false,
+      message: isMissingSchemaError(error) ? DATABASE_BEHIND_MESSAGE : "Couldn't save. Please try again.",
+    };
+  }
 
   revalidatePath("/food");
   return { ok: true, message: "Saved." };
