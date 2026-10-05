@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFoodForm, parseNutritionForm, sumEntries } from "./food";
+import { parseFoodForm, parseNutritionForm, parseSource, sumEntries } from "./food";
 
 function form(fields: Record<string, string>) {
   const data = new FormData();
@@ -87,6 +87,21 @@ describe("parseNutritionForm (used for saved foods)", () => {
     expect(parseNutritionForm(form({ name: "", calories: "100" })).ok).toBe(false);
     expect(parseNutritionForm(form({ name: "Banana", calories: "" })).ok).toBe(false);
     expect(parseNutritionForm(form({ name: "Banana", calories: "100", fat_g: "5000" })).ok).toBe(false);
+  });
+});
+
+describe("parseSource", () => {
+  it("accepts the three known sources", () => {
+    expect(parseSource("manual")).toBe("manual");
+    expect(parseSource("text")).toBe("text");
+    expect(parseSource("photo")).toBe("photo");
+  });
+
+  it("treats anything else as manual", () => {
+    expect(parseSource(null)).toBe("manual");
+    expect(parseSource("")).toBe("manual");
+    expect(parseSource("ai")).toBe("manual");
+    expect(parseSource("photo; drop table")).toBe("manual");
   });
 });
 
