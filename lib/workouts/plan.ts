@@ -142,3 +142,17 @@ export function groupSupersets<T extends { superset_with_next: boolean }>(exerci
   if (current.length > 0) groups.push(current);
   return groups;
 }
+
+// How long to rest after an exercise (or after a superset pair) before the next one.
+// Shown as a reminder between exercises; within a superset there is no rest.
+export const REST_BETWEEN_EXERCISES = { minMinutes: 3, maxMinutes: 5 } as const;
+
+/** "Rest 3–5 min", or "Rest 4 min" when both ends are equal. */
+export function formatRest(
+  range: { minMinutes: number; maxMinutes: number } = REST_BETWEEN_EXERCISES,
+): string {
+  const { minMinutes, maxMinutes } = range;
+  return minMinutes === maxMinutes
+    ? `Rest ${minMinutes} min`
+    : `Rest ${minMinutes}–${maxMinutes} min`;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PLAN } from "./defaults";
-import { formatSetsReps, groupSupersets, parsePlanJson } from "./plan";
+import { formatRest, formatSetsReps, groupSupersets, parsePlanJson, REST_BETWEEN_EXERCISES } from "./plan";
 
 describe("DEFAULT_PLAN", () => {
   it("covers all seven weekdays exactly once", () => {
@@ -114,5 +114,34 @@ describe("groupSupersets", () => {
     ];
     expect(groupSupersets(chain).map((g) => g.length)).toEqual([3]);
     expect(groupSupersets([])).toEqual([]);
+  });
+});
+
+describe("rest between exercises", () => {
+  it("defaults to 3-5 minutes", () => {
+    expect(REST_BETWEEN_EXERCISES).toEqual({ minMinutes: 3, maxMinutes: 5 });
+    expect(formatRest()).toBe("Rest 3–5 min");
+  });
+
+  it("formats other ranges", () => {
+    expect(formatRest({ minMinutes: 2, maxMinutes: 2 })).toBe("Rest 2 min");
+    expect(formatRest({ minMinutes: 1, maxMinutes: 3 })).toBe("Rest 1–3 min");
+  });
+
+  it("puts a rest after every group except the last (so none inside a superset)", () => {
+    const list = [
+      { n: "Pec deck", superset_with_next: true },
+      { n: "Incline press", superset_with_next: false },
+      { n: "Pull downs", superset_with_next: false },
+      { n: "Deadlift", superset_with_next: false },
+    ];
+    const groups = groupSupersets(list);
+    const restsAfter = groups.map((_, i) => i < groups.length - 1);
+    expect(groups.map((g) => g.map((e) => e.n))).toEqual([
+      ["Pec deck", "Incline press"],
+      ["Pull downs"],
+      ["Deadlift"],
+    ]);
+    expect(restsAfter).toEqual([true, true, false]);
   });
 });

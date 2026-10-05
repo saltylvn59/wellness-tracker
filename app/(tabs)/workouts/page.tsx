@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import GoToToday from "@/components/GoToToday";
@@ -5,7 +6,13 @@ import TodayPill from "@/components/TodayPill";
 import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import { formatSetsReps, groupSupersets, type PlanExercise, type WorkoutDay } from "@/lib/workouts/plan";
+import {
+  formatRest,
+  formatSetsReps,
+  groupSupersets,
+  type PlanExercise,
+  type WorkoutDay,
+} from "@/lib/workouts/plan";
 import { ensureDefaultPlan } from "@/lib/workouts/seed";
 
 const arrowClass =
@@ -134,32 +141,39 @@ export default async function WorkoutsPage({
               No exercises yet. Tap Edit plan to add some.
             </p>
           ) : (
-            groupSupersets(exercises).map((group) => (
-              <div
-                key={group[0].id}
-                className={
-                  group.length > 1
-                    ? "space-y-px overflow-hidden rounded-2xl border-2 border-accent"
-                    : "overflow-hidden rounded-2xl"
-                }
-              >
-                {group.length > 1 && (
-                  <p className="bg-accent px-4 py-1 text-xs font-semibold text-on-accent">
-                    Superset · no rest between
+            groupSupersets(exercises).map((group, groupIndex, groups) => (
+              <Fragment key={group[0].id}>
+                <div
+                  className={
+                    group.length > 1
+                      ? "space-y-px overflow-hidden rounded-2xl border-2 border-accent"
+                      : "overflow-hidden rounded-2xl"
+                  }
+                >
+                  {group.length > 1 && (
+                    <p className="bg-accent px-4 py-1 text-xs font-semibold text-on-accent">
+                      Superset · no rest between
+                    </p>
+                  )}
+                  {group.map((exercise) => {
+                    const target = formatSetsReps(exercise.target_sets, exercise.rep_min, exercise.rep_max);
+                    return (
+                      <div key={exercise.id} className="flex min-h-14 items-center justify-between gap-3 bg-card px-4 py-3">
+                        <p className="min-w-0 text-base font-medium">{exercise.name}</p>
+                        <p className={`shrink-0 text-sm ${target ? "font-semibold" : "text-muted"}`}>
+                          {target || "Set sets & reps"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Rest after every exercise (or superset pair) except the last one. */}
+                {groupIndex < groups.length - 1 && (
+                  <p className="flex items-center justify-center gap-1.5 py-0.5 text-sm font-medium text-muted">
+                    <span aria-hidden="true">⏱</span> {formatRest()}
                   </p>
                 )}
-                {group.map((exercise) => {
-                  const target = formatSetsReps(exercise.target_sets, exercise.rep_min, exercise.rep_max);
-                  return (
-                    <div key={exercise.id} className="flex min-h-14 items-center justify-between gap-3 bg-card px-4 py-3">
-                      <p className="min-w-0 text-base font-medium">{exercise.name}</p>
-                      <p className={`shrink-0 text-sm ${target ? "font-semibold" : "text-muted"}`}>
-                        {target || "Set sets & reps"}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
+              </Fragment>
             ))
           )}
 
