@@ -6,6 +6,7 @@ import {
   formatShortMonth,
   formatWeekday,
   getLocalDateKey,
+  isoWeekday,
   isValidDateKey,
   weekDays,
 } from "./dates";
@@ -83,6 +84,17 @@ describe("weekDays", () => {
       "2027-01-02",
       "2027-01-03",
     ]);
+  });
+});
+
+describe("isoWeekday", () => {
+  it("numbers days 1 (Monday) through 7 (Sunday)", () => {
+    expect(isoWeekday("2026-10-05")).toBe(1); // Monday
+    expect(isoWeekday("2026-10-06")).toBe(2);
+    expect(isoWeekday("2026-10-07")).toBe(3); // Wednesday
+    expect(isoWeekday("2026-10-09")).toBe(5); // Friday
+    expect(isoWeekday("2026-10-10")).toBe(6);
+    expect(isoWeekday("2026-10-11")).toBe(7); // Sunday
   });
 });
 

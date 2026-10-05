@@ -41,6 +41,13 @@ export function weekDays(key: string, weekStartsOn: number = WEEK_STARTS_ON): st
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
+/** Day of the week for a date key: 1 = Monday ... 7 = Sunday. */
+export function isoWeekday(key: string): number {
+  const [y, m, d] = parts(key);
+  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0 = Sunday
+  return day === 0 ? 7 : day;
+}
+
 /** Today's date on THIS device's clock. Only call this in the browser. */
 export function getLocalDateKey(now: Date = new Date()): string {
   return toKey(now.getFullYear(), now.getMonth() + 1, now.getDate());

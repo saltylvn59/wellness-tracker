@@ -8,7 +8,7 @@ const noSubscribe = () => () => {};
 
 // Says "Today" on today's page, or offers a way back when you're on another day.
 // It needs the phone's clock, so it renders nothing on the server.
-export default function TodayPill({ dateKey }: { dateKey: string }) {
+export default function TodayPill({ dateKey, href = "/food" }: { dateKey: string; href?: string }) {
   const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
 
   if (!today) return <span className="block h-11" />; // keeps the layout steady
@@ -17,7 +17,7 @@ export default function TodayPill({ dateKey }: { dateKey: string }) {
   }
   return (
     <Link
-      href="/food"
+      href={href}
       className="flex h-11 items-center text-sm font-medium text-accent active:opacity-70"
     >
       Jump to today
