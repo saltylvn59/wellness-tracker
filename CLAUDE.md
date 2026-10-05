@@ -32,7 +32,7 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 ## Roadmap
 0. Setup ✅ (Node, git, project folder)
 1. Skeleton + PWA shell + first deploy ✅ (live at https://wellness-tracker-virid.vercel.app, verified on iPhone)
-2. Auth + database
+2. Auth + database ✅ (Google sign-in, profiles table + RLS, calorie-goal settings; live and verified)
 3. Manual food log + daily view + date circle
 4. AI text estimate
 5. AI photo estimate
