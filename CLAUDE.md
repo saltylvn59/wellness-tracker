@@ -21,6 +21,9 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 - Keep pure logic (streaks, goal status) in `lib/` with unit tests.
 - Small, focused git commits with clear messages.
 
+- This is Next.js 16 (newer than most tutorials). Check the bundled docs in `node_modules/next/dist/docs/` before using a Next.js API (see `AGENTS.md`).
+- Browser-only code goes in components marked `"use client"` (see `components/`); pages in `app/` are server components by default.
+
 ## Commands
 - `npm run dev`: start the local dev server
 - `npm run build`: production build
@@ -28,7 +31,7 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 
 ## Roadmap
 0. Setup ✅ (Node, git, project folder)
-1. Skeleton + PWA shell + first Vercel deploy
+1. Skeleton + PWA shell ✅ (tab bar, manifest, icons); first Vercel deploy still pending
 2. Auth + database
 3. Manual food log + daily view + date circle
 4. AI text estimate
