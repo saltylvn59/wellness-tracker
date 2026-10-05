@@ -10,12 +10,12 @@ An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting wo
 - **Cardio:** log runs and rides; weekly/monthly distance goals.
 
 ## Stack
-Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, storage), Anthropic API (server-side only), deployed on Vercel.
+Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, storage), Google Gemini free tier for AI food estimates (server-side only, via `lib/ai/gemini.ts`, the one swappable provider file), deployed on Vercel.
 
 ## Conventions
 - Mobile-first: design for ~390px width, safe-area insets, 44px+ tap targets, 16px+ input font size (prevents iOS zoom).
 - The Anthropic API key and Supabase service key live only in `.env.local` (git-ignored). Never expose them to browser code.
-- Call Claude only from server routes (e.g. `app/api/analyze-food/route.ts`); validate the JSON reply before using it.
+- Call the AI only from server routes (`app/api/estimate-food/route.ts`); validate the JSON reply before using it (`lib/ai/nutrition.ts`). `GEMINI_API_KEY` lives only in `.env.local` and Vercel (Sensitive).
 - Row-level security on every Supabase table; every table is scoped to the signed-in user.
 - Dates are stored as the user's local calendar date, not UTC timestamps, so daily totals and streaks don't break at midnight.
 - Keep pure logic (streaks, goal status) in `lib/` with unit tests.
@@ -34,8 +34,8 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 1. Skeleton + PWA shell + first deploy ✅ (live at https://wellness-tracker-virid.vercel.app, verified on iPhone)
 2. Auth + database ✅ (Google sign-in, profiles table + RLS, calorie-goal settings; live and verified)
 3. Manual food log + daily view + date circle ✅ + Add food hub (Saved foods library) ✅ (add/edit/delete, green/red circle, Mon-Sun week strip, vitest tests)
-4. AI text estimate (the hub's "Describe your food" button; currently "coming soon")
-5. AI photo estimate (the hub's "Take a picture" button; currently "coming soon")
+4. AI text estimate ✅ ("Describe your food"; Gemini free tier, 40/day per user)
+5. AI photo estimate ✅ ("Take a picture"; photos resized in-browser, never stored; photo flow still to be tried on a real iPhone)
 6. Streaks
 7. Workouts
 8. Cardio + goals
