@@ -38,6 +38,6 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 4. AI text estimate ✅ ("Describe your food"; Gemini free tier, 40/day per user)
 5. AI photo estimate ✅ ("Take a picture"; photos resized in-browser, never stored; photo flow still to be tried on a real iPhone)
 6. Streaks
-7. Workouts: step A ✅ (weekly plan, editable exercises, own sets and rep ranges, supersets); step B (log weight and reps per set, show last time's numbers) next
+7. Workouts ✅ (weekly plan; editable exercises with own sets/rep ranges; supersets and 3-5 min rest reminders; Log button with scroll wheels for weight and reps; last time, today's sets, and heaviest weight on each card; weight defaults: last used, else 100 lb, dumbbell 25 lb)
 8. Cardio + goals
 9. Polish and real-iPhone testing
