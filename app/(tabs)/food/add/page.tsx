@@ -31,30 +31,25 @@ export default async function AddFoodPage({
           </span>
         </Link>
 
-        {/* The two AI options arrive in the next step. */}
-        <div aria-disabled="true" className={`${cardClass} opacity-60`}>
+        <Link href={`/food/photo?date=${date}`} className={cardClass}>
           <span className="text-3xl" aria-hidden="true">
             📷
           </span>
           <span>
             <span className="block text-base font-semibold">Take a picture</span>
-            <span className="block text-sm text-muted">
-              AI estimates calories and macros · coming soon
-            </span>
+            <span className="block text-sm text-muted">AI estimates the calories and macros</span>
           </span>
-        </div>
+        </Link>
 
-        <div aria-disabled="true" className={`${cardClass} opacity-60`}>
+        <Link href={`/food/describe?date=${date}`} className={cardClass}>
           <span className="text-3xl" aria-hidden="true">
             ✍️
           </span>
           <span>
             <span className="block text-base font-semibold">Describe your food</span>
-            <span className="block text-sm text-muted">
-              Type it, AI estimates calories and macros · coming soon
-            </span>
+            <span className="block text-sm text-muted">Type it and AI estimates the numbers</span>
           </span>
-        </div>
+        </Link>
       </div>
 
       <Link

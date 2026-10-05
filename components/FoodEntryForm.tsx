@@ -14,10 +14,14 @@ export default function FoodEntryForm({
   entry,
   prefill,
   defaultDate,
+  source,
+  hideSaveToggle = false,
 }: {
   entry?: FoodEntry; // present when editing, absent when adding
-  prefill?: Nutrition; // starting values when adding from a saved food
+  prefill?: Nutrition; // starting values when adding (from a saved food or an AI estimate)
   defaultDate: string;
+  source?: "text" | "photo"; // set when the numbers came from an AI estimate
+  hideSaveToggle?: boolean; // true for foods that are already in your saved list
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(saveFoodEntry, null);
   const date = entry?.entry_date ?? defaultDate;
@@ -26,6 +30,7 @@ export default function FoodEntryForm({
   return (
     <form action={formAction} className="space-y-4">
       {entry && <input type="hidden" name="id" value={entry.id} />}
+      {source && <input type="hidden" name="source" value={source} />}
 
       <div>
         <label htmlFor="name" className={labelClass}>
@@ -124,7 +129,7 @@ export default function FoodEntryForm({
       </div>
 
       {/* A food that came from your saved list is already saved. */}
-      {!prefill && (
+      {!hideSaveToggle && (
         <label className="flex min-h-12 items-center gap-3 rounded-xl bg-card px-4">
           <input
             type="checkbox"

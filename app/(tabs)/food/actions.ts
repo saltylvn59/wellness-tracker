@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isValidDateKey } from "@/lib/dates";
-import { parseFoodForm } from "@/lib/food";
+import { parseFoodForm, parseSource } from "@/lib/food";
 import { upsertSavedFood } from "@/lib/savedFoods";
 
 export type FormState = { message: string } | null;
@@ -28,7 +28,7 @@ export async function saveFoodEntry(
       ? await supabase.from("food_entries").update(parsed.values).eq("id", id)
       : await supabase
           .from("food_entries")
-          .insert({ ...parsed.values, user_id: userId, source: "manual" });
+          .insert({ ...parsed.values, user_id: userId, source: parseSource(formData.get("source")) });
 
   if (error) return { message: "Couldn't save. Please try again." };
 

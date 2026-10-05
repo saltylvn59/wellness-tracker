@@ -24,7 +24,7 @@ export type FoodEntry = Nutrition & {
   id: string;
   entry_date: string; // "YYYY-MM-DD"
   meal_type: MealType;
-  source: "manual" | "text" | "photo";
+  source: EntrySource;
 };
 
 // One row of the saved_foods table (your personal library).
@@ -45,6 +45,14 @@ export function sumEntries(entries: Pick<FoodEntry, keyof Totals>[]): Totals {
 }
 
 export type NutritionResult = { ok: true; values: Nutrition } | { ok: false; message: string };
+
+export type EntrySource = "manual" | "text" | "photo";
+export const ENTRY_SOURCES: readonly EntrySource[] = ["manual", "text", "photo"];
+
+// Where an entry's numbers came from. Anything unexpected counts as "manual".
+export function parseSource(raw: FormDataEntryValue | null): EntrySource {
+  return ENTRY_SOURCES.find((source) => source === raw) ?? "manual";
+}
 
 export type FoodValues = Nutrition & { entry_date: string; meal_type: MealType };
 export type ParseResult = { ok: true; values: FoodValues } | { ok: false; message: string };
