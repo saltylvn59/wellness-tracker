@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SettingsGear from "@/components/SettingsGear";
 import StreakBadge from "@/components/StreakBadge";
 import TodayPill from "@/components/TodayPill";
 import WeekStrip, { type WeekDay } from "@/components/WeekStrip";
@@ -27,13 +28,7 @@ export default function NutritionHeader({
         <h1 className="text-2xl font-bold">Nutrition</h1>
         <div className="flex items-center gap-1">
           <TodayPill dateKey={date} href="/food" />
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-xl active:bg-card"
-          >
-            ⚙️
-          </Link>
+          <SettingsGear />
         </div>
       </div>
 
