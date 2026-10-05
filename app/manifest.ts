@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/food",
     display: "standalone", // full-screen, like a native app
     background_color: "#ffffff",
-    theme_color: "#16a34a",
+    theme_color: "#34c759", // Apple system green
     icons: [{ src: "/icon", sizes: "512x512", type: "image/png" }],
   };
 }

@@ -23,7 +23,7 @@ export default function GoogleSignInButton() {
       type="button"
       onClick={signIn}
       disabled={loading}
-      className="flex min-h-12 w-full items-center justify-center rounded-xl bg-foreground px-4 text-base font-semibold text-background active:opacity-80 disabled:opacity-60"
+      className="flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-60"
     >
       {loading ? "Opening Google…" : "Continue with Google"}
     </button>

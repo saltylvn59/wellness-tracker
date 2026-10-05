@@ -6,9 +6,17 @@
   --muted: #6b7280;
   --card: #f4f4f5;
   --border: #e4e4e7;
+  /* Apple's system colors: green (Phone/Messages) for accents and "under goal",
+     red for "over goal". */
+  --accent: #34c759;
+  --on-accent: #ffffff;
+  --danger: #ff3b30;
 }
 
 @theme inline {
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
@@ -24,7 +32,16 @@
     --muted: #a1a1aa;
     --card: #18181b;
     --border: #27272a;
+    /* Apple uses slightly brighter variants of these in dark mode */
+    --accent: #30d158;
+    --danger: #ff453a;
   }
+}
+
+/* Keyboard/tap focus outline in the accent color */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 body {

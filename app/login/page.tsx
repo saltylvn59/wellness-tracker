@@ -15,7 +15,7 @@ export default async function LoginPage({
       </div>
 
       {error && (
-        <p role="alert" className="rounded-xl bg-card p-3 text-center text-sm text-red-500">
+        <p role="alert" className="rounded-xl bg-card p-3 text-center text-sm text-danger">
           Sign-in didn&apos;t work. Please try again.
         </p>
       )}

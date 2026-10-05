@@ -31,7 +31,7 @@ export default function TabBar() {
                 aria-current={active ? "page" : undefined}
                 // min-h-14 = 56px tall, comfortably above the 44px tap-target minimum
                 className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-                  active ? "text-foreground" : "text-muted"
+                  active ? "text-accent" : "text-muted"
                 }`}
               >
                 <span

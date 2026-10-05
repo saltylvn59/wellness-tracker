@@ -33,7 +33,7 @@ export default function CalorieGoalForm({ currentGoal }: { currentGoal: number |
         <button
           type="submit"
           disabled={pending}
-          className="min-h-12 rounded-xl bg-foreground px-5 text-base font-semibold text-background active:opacity-80 disabled:opacity-60"
+          className="min-h-12 rounded-xl bg-accent px-5 text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -41,7 +41,7 @@ export default function CalorieGoalForm({ currentGoal }: { currentGoal: number |
       {result && (
         <p
           role="status"
-          className={`text-sm ${result.ok ? "text-green-600" : "text-red-500"}`}
+          className={`text-sm ${result.ok ? "text-accent" : "text-danger"}`}
         >
           {result.message}
         </p>

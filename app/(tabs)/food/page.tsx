@@ -37,7 +37,7 @@ export default async function FoodPage() {
           ) : (
             <>
               Daily goal not set yet.{" "}
-              <Link href="/settings" className="font-medium text-foreground underline">
+              <Link href="/settings" className="font-medium text-accent underline">
                 Set it in Settings
               </Link>
             </>
