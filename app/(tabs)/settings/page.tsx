@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import CalorieGoalForm from "@/components/CalorieGoalForm";
+import GoalsForm from "@/components/GoalsForm";
+import type { Goals } from "@/lib/goals";
 import { signOut } from "./actions";
 
 export default async function SettingsPage() {
@@ -9,16 +10,24 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("calorie_goal")
+    .select("calorie_goal, protein_goal_g, carb_goal_g, fat_goal_g")
     .eq("id", userId ?? "")
     .maybeSingle();
+
+  // Before you've saved anything, the calorie goal is blank (null).
+  const goals = (profile ?? {
+    calorie_goal: null,
+    protein_goal_g: null,
+    carb_goal_g: null,
+    fat_goal_g: null,
+  }) as unknown as Goals;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
 
       <section className="rounded-2xl bg-card p-4">
-        <CalorieGoalForm currentGoal={profile?.calorie_goal ?? null} />
+        <GoalsForm goals={goals} />
       </section>
 
       <form action={signOut}>
