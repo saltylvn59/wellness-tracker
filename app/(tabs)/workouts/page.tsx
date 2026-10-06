@@ -257,7 +257,7 @@ export default async function WorkoutsPage({
       {today?.kind === "rest" && (
         <section className="rounded-2xl bg-card p-6 text-center">
           <p className="text-4xl" aria-hidden="true">
-            😴
+            🧘
           </p>
           <p className="mt-2 text-base font-semibold">Rest day</p>
           <p className="mt-1 text-sm text-muted">Recover, stretch, and sleep well.</p>
