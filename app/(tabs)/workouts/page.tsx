@@ -122,16 +122,24 @@ export default async function WorkoutsPage({
     if (targetRow?.target_weight_lb != null) targetWeight = Number(targetRow.target_weight_lb);
   }
 
-  // Tuesday and Thursday also have a quiet tanning log: the minutes saved for this date, if any.
+  // Tuesday and Thursday also have a quiet tanning log: the minutes saved for this date, if any,
+  // and the most recent earlier session so you can remember what you did last time.
   const showTanning = isTanningDay(isoWeekday(date));
   let tanningMinutes: number | null = null;
+  let lastTanningMinutes: number | null = null;
   if (showTanning) {
-    const { data: tan } = await supabase
-      .from("tanning_logs")
-      .select("minutes")
-      .eq("log_date", date)
-      .maybeSingle();
+    const [{ data: tan }, { data: previous }] = await Promise.all([
+      supabase.from("tanning_logs").select("minutes").eq("log_date", date).maybeSingle(),
+      supabase
+        .from("tanning_logs")
+        .select("minutes")
+        .lt("log_date", date)
+        .order("log_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
     tanningMinutes = tan ? Number(tan.minutes) : null;
+    lastTanningMinutes = previous ? Number(previous.minutes) : null;
   }
 
   // Whether today's sauna and stretch are ticked (lifting days only).
@@ -237,7 +245,7 @@ export default async function WorkoutsPage({
         </>
       )}
 
-      {showTanning && <TanningLog key={date} date={date} minutes={tanningMinutes} />}
+      {showTanning && <TanningLog key={date} date={date} minutes={tanningMinutes} lastMinutes={lastTanningMinutes} />}
 
       {today?.kind === "lift" && (
         <section className="space-y-3">

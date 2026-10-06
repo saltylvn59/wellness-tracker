@@ -8,16 +8,24 @@ import { deleteTanning, saveTanning } from "@/app/(tabs)/workouts/tanning-action
 import { DEFAULT_TANNING_MINUTES, TANNING_MINUTE_OPTIONS } from "@/lib/tanning";
 
 // A quiet row for Tuesday and Thursday: just a sun. Tap it to pick 5 to 15 minutes on a
-// scroll wheel. It's plain text with no card, so it doesn't pull attention from the cardio.
-export default function TanningLog({ date, minutes }: { date: string; minutes: number | null }) {
+// scroll wheel, which starts on what you did last time. It's plain text with no card, so it doesn't pull attention from the cardio.
+export default function TanningLog({
+  date,
+  minutes,
+  lastMinutes,
+}: {
+  date: string;
+  minutes: number | null; // saved for this day, if any
+  lastMinutes: number | null; // your most recent earlier session, to remember last time
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [picked, setPicked] = useState(minutes ?? DEFAULT_TANNING_MINUTES);
+  const [picked, setPicked] = useState(minutes ?? lastMinutes ?? DEFAULT_TANNING_MINUTES);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function openSheet() {
-    setPicked(minutes ?? DEFAULT_TANNING_MINUTES);
+    setPicked(minutes ?? lastMinutes ?? DEFAULT_TANNING_MINUTES);
     setError(null);
     setOpen(true);
   }
@@ -38,11 +46,21 @@ export default function TanningLog({ date, minutes }: { date: string; minutes: n
       <button
         type="button"
         onClick={openSheet}
-        aria-label={minutes === null ? "Log tanning time" : `Tanning, ${minutes} minutes. Tap to change`}
+        aria-label={
+          minutes !== null
+            ? `Tanning, ${minutes} minutes. Tap to change`
+            : lastMinutes !== null
+              ? `Log tanning time. Last time was ${lastMinutes} minutes`
+              : "Log tanning time"
+        }
         className="flex min-h-11 w-full items-center gap-2 px-1 text-sm text-muted active:opacity-70"
       >
         <span aria-hidden="true">☀️</span>
-        {minutes !== null && <span className="tabular-nums">{minutes} min</span>}
+        {minutes !== null ? (
+          <span className="tabular-nums">{minutes} min</span>
+        ) : (
+          lastMinutes !== null && <span className="tabular-nums">Last time: {lastMinutes} min</span>
+        )}
       </button>
 
       <BottomSheet open={open} onClose={() => setOpen(false)} label="Tanning time">
