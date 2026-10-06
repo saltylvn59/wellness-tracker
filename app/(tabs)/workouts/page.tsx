@@ -23,6 +23,7 @@ import {
 import { loadDoneDates } from "@/lib/workouts/activity";
 import { latestSets, type HistoryRow } from "@/lib/workouts/history";
 import { defaultRepsFor, defaultWeightFor } from "@/lib/workouts/logging";
+import { REST_DAY_TITLE } from "@/lib/workouts/defaults";
 import { THREE_REP_MAX_LIFTS, MIN_REPS_FOR_MAX } from "@/lib/workouts/maxes";
 import { loadWorkoutDays } from "@/lib/workouts/seed";
 
@@ -243,7 +244,9 @@ export default async function WorkoutsPage({
       <section className="space-y-1">
         <h2 className="text-lg font-semibold">
           {formatWeekday(date)}
-          {today ? <span className="text-muted"> · {today.title}</span> : null}
+          {today ? (
+            <span className="text-muted"> · {today.kind === "rest" ? REST_DAY_TITLE : today.title}</span>
+          ) : null}
         </h2>
         <p className="text-sm text-muted">{formatFullDate(date)}</p>
       </section>
@@ -259,7 +262,7 @@ export default async function WorkoutsPage({
           <p className="text-4xl" aria-hidden="true">
             🧘
           </p>
-          <p className="mt-2 text-base font-semibold">Rest day</p>
+          <p className="mt-2 text-base font-semibold">{REST_DAY_TITLE}</p>
           <p className="mt-1 text-sm text-muted">Recover, stretch, and sleep well.</p>
         </section>
       )}

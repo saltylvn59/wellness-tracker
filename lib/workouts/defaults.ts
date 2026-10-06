@@ -16,6 +16,10 @@ export type DefaultDay = {
   exercises: DefaultExercise[];
 };
 
+// What a rest day is called everywhere in the app (it's shown for any day set to rest, even
+// if an older copy of your plan still says "Rest Day").
+export const REST_DAY_TITLE = "Recovery Day";
+
 export const DEFAULT_PLAN: DefaultDay[] = [
   {
     weekday: 1,
@@ -53,5 +57,5 @@ export const DEFAULT_PLAN: DefaultDay[] = [
     ],
   },
   { weekday: 6, kind: "cardio", title: "Cardio", exercises: [] },
-  { weekday: 7, kind: "rest", title: "Rest Day", exercises: [] },
+  { weekday: 7, kind: "rest", title: REST_DAY_TITLE, exercises: [] },
 ];

@@ -19,7 +19,7 @@ describe("DEFAULT_PLAN", () => {
     expect(byDay[3]).toMatchObject({ kind: "lift", title: "Legs" });
     expect(byDay[5]).toMatchObject({ kind: "lift", title: "Delts & Arms" });
     for (const weekday of [2, 4, 6]) expect(byDay[weekday].kind).toBe("cardio");
-    expect(byDay[7]).toMatchObject({ kind: "rest", title: "Rest Day" });
+    expect(byDay[7]).toMatchObject({ kind: "rest", title: "Recovery Day" });
   });
 
   it("only lifting days have exercises, and the supersets are the paired ones", () => {
