@@ -8,7 +8,7 @@ export default function ThreeRepMaxes({ maxes }: { maxes: (number | null)[] }) {
     <section
       aria-label="3-rep maxes"
       title="Heaviest weight logged for 3+ reps"
-      className="flex items-center gap-3 rounded-2xl bg-card px-4 py-2"
+      className="flex items-center gap-3 rounded-2xl bg-card px-4 py-1.5"
     >
       <span className="text-base" aria-hidden="true">
         🏆
