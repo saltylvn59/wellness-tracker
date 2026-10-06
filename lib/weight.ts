@@ -5,6 +5,9 @@ export const MIN_WEIGHT_LB = 70;
 export const MAX_WEIGHT_LB = 500;
 export const DEFAULT_WEIGHT_LB = 150; // where the wheels start before your first weigh-in
 
+// A weigh-in as shown on the Weight card: the date you weighed in and the pounds.
+export type LatestWeight = { date: string; pounds: number };
+
 /** 70, 71 ... 500: the whole-pound wheel. */
 export const WHOLE_POUND_OPTIONS: number[] = Array.from(
   { length: MAX_WEIGHT_LB - MIN_WEIGHT_LB + 1 },

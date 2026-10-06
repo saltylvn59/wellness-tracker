@@ -11,12 +11,11 @@ import {
   describeTargetGap,
   formatWeightLb,
   joinWeight,
+  type LatestWeight,
   splitWeight,
   TENTH_OPTIONS,
   WHOLE_POUND_OPTIONS,
 } from "@/lib/weight";
-
-export type LatestWeight = { date: string; pounds: number };
 
 // A slim row on cardio days: your current weight (your latest weigh-in), a small line with how
 // far you are from your target, and a button that opens two scroll wheels (pounds and tenths).
