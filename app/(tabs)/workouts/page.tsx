@@ -132,7 +132,8 @@ export default async function WorkoutsPage({
         const { data } = await supabase
           .from("workout_sets")
           .select("weight")
-          .ilike("exercise_name", lift.exerciseName) // no wildcards: same name, any capitalization
+          // Same name (no wildcards), any capitalization, singular or plural.
+          .or(lift.exerciseNames.map((name) => `exercise_name.ilike.${name}`).join(","))
           .gte("reps", MIN_REPS_FOR_MAX)
           .not("weight", "is", null)
           .order("weight", { ascending: false })
