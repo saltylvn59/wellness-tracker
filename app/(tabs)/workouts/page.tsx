@@ -46,6 +46,7 @@ export default async function WorkoutsPage({
   const today = byWeekday.get(isoWeekday(date));
 
   // Then everything this kind of day needs, all fetched at the same time.
+  // (Don't put key={date} on the cards below: switching days then left stale copies on screen.)
   const [lift, cardio, tanning] = await Promise.all([
     today?.kind === "lift" ? loadLiftDay(supabase, date, today.id) : null,
     today?.kind === "cardio" ? loadCardioDay(supabase, userId, date) : null,
@@ -56,7 +57,7 @@ export default async function WorkoutsPage({
     <div className="space-y-6">
       <FitnessHeader date={date} days={days} doneDates={doneDates} />
 
-      {cardio && <WeightLog key={date} date={date} latest={cardio.latestWeight} target={cardio.targetWeight} />}
+      {cardio && <WeightLog date={date} latest={cardio.latestWeight} target={cardio.targetWeight} />}
       {lift && <ThreeRepMaxes maxes={lift.threeRepMaxes} />}
 
       <section className="space-y-1">
@@ -92,7 +93,7 @@ export default async function WorkoutsPage({
         </>
       )}
 
-      {tanning && <TanningLog key={date} date={date} minutes={tanning.minutes} lastMinutes={tanning.lastMinutes} />}
+      {tanning && <TanningLog date={date} minutes={tanning.minutes} lastMinutes={tanning.lastMinutes} />}
 
       {today && lift && (
         <section className="space-y-3">
