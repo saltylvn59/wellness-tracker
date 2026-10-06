@@ -27,42 +27,21 @@ export const GOAL_LIMITS = {
   target_weight_lb: { min: 70, max: 500 },
 } as const;
 
-// Blank -> null; a number in range -> the whole number; anything else -> "invalid".
+// Blank -> null; a number in range (rounded to `decimals` places) -> that number; anything
+// else -> "invalid". Decimal fields also accept a comma ("12,5"); whole-number fields don't,
+// so "1,000" is rejected instead of being quietly read as 1.
 function readGoal(
   raw: FormDataEntryValue | null,
   min: number,
   max: number,
+  decimals = 0,
 ): number | null | "invalid" {
   const text = typeof raw === "string" ? raw.trim() : "";
   if (text === "") return null;
-  const n = Number(text);
+  const n = Number(decimals > 0 ? text.replace(",", ".") : text);
   if (!Number.isFinite(n)) return "invalid";
-  const rounded = Math.round(n);
-  return rounded < min || rounded > max ? "invalid" : rounded;
-}
-
-// Like readGoal, but keeps up to 2 decimals (for miles) and accepts "12,5" too.
-function readDecimalGoal(
-  raw: FormDataEntryValue | null,
-  min: number,
-  max: number,
-): number | null | "invalid" {
-  const text = typeof raw === "string" ? raw.trim().replace(",", ".") : "";
-  if (text === "") return null;
-  const n = Number(text);
-  if (!Number.isFinite(n)) return "invalid";
-  const rounded = Math.round(n * 100) / 100;
-  return rounded < min || rounded > max ? "invalid" : rounded;
-}
-
-// Like readDecimalGoal, but keeps one decimal (a weight like 175.5).
-function readWeightGoal(raw: FormDataEntryValue | null): number | null | "invalid" {
-  const text = typeof raw === "string" ? raw.trim().replace(",", ".") : "";
-  if (text === "") return null;
-  const n = Number(text);
-  if (!Number.isFinite(n)) return "invalid";
-  const rounded = Math.round(n * 10) / 10;
-  const { min, max } = GOAL_LIMITS.target_weight_lb;
+  const factor = 10 ** decimals;
+  const rounded = Math.round(n * factor) / factor;
   return rounded < min || rounded > max ? "invalid" : rounded;
 }
 
@@ -94,17 +73,19 @@ export function parseGoalsForm(formData: FormData): GoalsResult {
   }
 
   // Weekly cardio distance goals (run and cycle in miles, swim in yards).
-  const run = readDecimalGoal(formData.get("weekly_run_miles"), GOAL_LIMITS.weekly_run_miles.min, GOAL_LIMITS.weekly_run_miles.max);
-  const cycle = readDecimalGoal(formData.get("weekly_cycle_miles"), GOAL_LIMITS.weekly_cycle_miles.min, GOAL_LIMITS.weekly_cycle_miles.max);
+  const { weekly_run_miles: runLimits, weekly_cycle_miles: cycleLimits, weekly_swim_yards: swimLimits } = GOAL_LIMITS;
+  const run = readGoal(formData.get("weekly_run_miles"), runLimits.min, runLimits.max, 2);
+  const cycle = readGoal(formData.get("weekly_cycle_miles"), cycleLimits.min, cycleLimits.max, 2);
   if (run === "invalid" || cycle === "invalid") {
     return { ok: false, message: "Weekly run and cycle goals must be between 0.1 and 500 miles, or left blank." };
   }
-  const swim = readGoal(formData.get("weekly_swim_yards"), GOAL_LIMITS.weekly_swim_yards.min, GOAL_LIMITS.weekly_swim_yards.max);
+  const swim = readGoal(formData.get("weekly_swim_yards"), swimLimits.min, swimLimits.max);
   if (swim === "invalid") {
     return { ok: false, message: "The weekly swim goal must be whole yards from 1 to 100,000, or left blank." };
   }
 
-  const targetWeight = readWeightGoal(formData.get("target_weight_lb"));
+  const { target_weight_lb: weightLimits } = GOAL_LIMITS;
+  const targetWeight = readGoal(formData.get("target_weight_lb"), weightLimits.min, weightLimits.max, 1);
   if (targetWeight === "invalid") {
     return { ok: false, message: "Target weight must be between 70 and 500 lb, or left blank." };
   }

@@ -1,15 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { currentUserId, failedSave, INVALID_DATE, SAVE_FAILED, SIGN_IN_AGAIN, type ActionResult } from "@/lib/actionResult";
 import { isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import { DATABASE_BEHIND_MESSAGE } from "@/lib/dbErrors";
 import { validateSetInput } from "@/lib/workouts/logging";
 import { upsertSession } from "@/lib/workouts/session";
-
-export type LogResult = { ok: true } | { ok: false; message: string };
-
-const FAILED: LogResult = { ok: false, message: "Couldn't save. Please try again." };
 
 // Saves one set (weight and reps) for an exercise on a date.
 // The first set you log on a date also creates that day's workout session.
@@ -18,15 +14,14 @@ export async function logSet(input: {
   exerciseId: string;
   weight: number;
   reps: number;
-}): Promise<LogResult> {
-  if (!isValidDateKey(String(input.date))) return { ok: false, message: "Invalid date." };
+}): Promise<ActionResult> {
+  if (!isValidDateKey(input.date)) return INVALID_DATE;
   const checked = validateSetInput(input.weight, input.reps);
   if (!checked.ok) return checked;
 
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
-  if (!userId) return { ok: false, message: "Please sign in again." };
+  const userId = await currentUserId(supabase);
+  if (!userId) return SIGN_IN_AGAIN;
 
   // Look the exercise up ourselves instead of trusting names sent by the browser.
   // Row Level Security means this only finds YOUR exercises.
@@ -42,11 +37,11 @@ export async function logSet(input: {
     .select("id, title")
     .eq("id", exercise.day_id)
     .maybeSingle();
-  if (!day) return FAILED;
+  if (!day) return SAVE_FAILED;
 
   // One session per date (the table enforces it); reuse it if it already exists.
   const session = await upsertSession(supabase, userId, input.date, day);
-  if (!session.ok) return session.databaseBehind ? { ok: false, message: DATABASE_BEHIND_MESSAGE } : FAILED;
+  if (!session.ok) return failedSave(session.error);
   const sessionId = session.id;
 
   // Next set number for this exercise today.
@@ -71,19 +66,19 @@ export async function logSet(input: {
     weight: checked.weight,
     reps: checked.reps,
   });
-  if (error) return FAILED;
+  if (error) return SAVE_FAILED;
 
   revalidatePath("/workouts");
   return { ok: true };
 }
 
-export async function deleteSet(setId: string): Promise<LogResult> {
-  if (typeof setId !== "string" || setId === "") return FAILED;
+export async function deleteSet(setId: string): Promise<ActionResult> {
+  if (typeof setId !== "string" || setId === "") return SAVE_FAILED;
 
   const supabase = await createClient();
   // Row Level Security means this can only ever delete your own set.
   const { error } = await supabase.from("workout_sets").delete().eq("id", setId);
-  if (error) return FAILED;
+  if (error) return SAVE_FAILED;
 
   revalidatePath("/workouts");
   return { ok: true };

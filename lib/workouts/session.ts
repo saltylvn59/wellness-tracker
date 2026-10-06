@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isMissingSchemaError } from "@/lib/dbErrors";
 
 // Extra things recorded on a workout day besides the sets themselves.
 export type SessionFields = {
@@ -9,9 +8,11 @@ export type SessionFields = {
 
 // Makes sure there is a workout session for this date (one per date, enforced by
 // the database) and optionally updates its sauna / stretch ticks. Only the fields
-// you pass are changed. On failure, `databaseBehind` is true when the cause is a
-// missing column or table (a SQL step that hasn't been run yet).
-export type UpsertSessionResult = { ok: true; id: string } | { ok: false; databaseBehind: boolean };
+// you pass are changed. On failure, `error` is what the database said (hand it to
+// failedSave() to tell a missing SQL step apart from an ordinary failure).
+export type UpsertSessionResult =
+  | { ok: true; id: string }
+  | { ok: false; error: { code?: string | null } | null };
 
 export async function upsertSession(
   supabase: SupabaseClient,
@@ -28,6 +29,6 @@ export async function upsertSession(
     )
     .select("id")
     .single();
-  if (error || !data) return { ok: false, databaseBehind: isMissingSchemaError(error) };
+  if (error || !data) return { ok: false, error };
   return { ok: true, id: data.id as string };
 }

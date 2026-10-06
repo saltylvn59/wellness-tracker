@@ -14,8 +14,9 @@ function toKey(year: number, month: number, day: number): string {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-/** True only for real calendar dates ("2026-02-30" is rejected). */
-export function isValidDateKey(value: string): boolean {
+/** True only for real calendar dates ("2026-02-30" is rejected). Anything that isn't a string is rejected too. */
+export function isValidDateKey(value: unknown): value is string {
+  if (typeof value !== "string") return false;
   const match = DATE_KEY.exec(value);
   if (!match) return false;
   const [y, m, d] = [Number(match[1]), Number(match[2]), Number(match[3])];
