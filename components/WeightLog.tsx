@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import BottomSheet from "@/components/BottomSheet";
 import WheelPicker from "@/components/WheelPicker";
 import { deleteWeight, saveWeight } from "@/app/(tabs)/workouts/weight-actions";
-import { formatFullDate } from "@/lib/dates";
+import { formatDayNumber, formatFullDate, formatShortMonth } from "@/lib/dates";
 import {
   DEFAULT_WEIGHT_LB,
   describeTargetGap,
@@ -18,8 +18,8 @@ import {
 
 export type LatestWeight = { date: string; pounds: number };
 
-// Shown on cardio days: your current weight (your latest weigh-in), how far it is from
-// your target, and a button that opens two scroll wheels (pounds and tenths) to log it.
+// A slim row on cardio days: your current weight (your latest weigh-in), a small line with how
+// far you are from your target, and a button that opens two scroll wheels (pounds and tenths).
 export default function WeightLog({
   date,
   latest,
@@ -59,47 +59,37 @@ export default function WeightLog({
   }
 
   const gap = latest && target !== null ? describeTargetGap(latest.pounds, target) : null;
+  // The small line under the number: when you last weighed in (if not today) and the target.
+  const details = [
+    latest && !loggedToday ? `as of ${formatShortMonth(latest.date)} ${formatDayNumber(latest.date)}` : null,
+    target !== null && gap ? `${gap.atTarget ? "🎯 " : ""}${gap.text} (target ${formatWeightLb(target)})` : null,
+    target !== null && !gap ? `Target ${formatWeightLb(target)} lb` : null,
+  ].filter(Boolean);
 
   return (
-    <section aria-label="Weight" className="rounded-2xl bg-card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-muted">
-            <span aria-hidden="true">⚖️</span> Weight
-          </h3>
+    <section aria-label="Weight" className="rounded-2xl bg-card px-4 py-2">
+      <div className="flex items-center gap-3">
+        <span className="text-base" aria-hidden="true">
+          ⚖️
+        </span>
+        <div className="min-w-0 flex-1">
           {latest ? (
-            <>
-              <p className="mt-0.5 text-3xl font-bold tabular-nums">
-                {formatWeightLb(latest.pounds)} <span className="text-base font-medium text-muted">lb</span>
-              </p>
-              <p className="text-xs text-muted">
-                {loggedToday ? "Weighed in today" : `Last weigh-in ${formatFullDate(latest.date)}`}
-              </p>
-            </>
+            <p className="text-lg font-semibold leading-tight tabular-nums">
+              {formatWeightLb(latest.pounds)} <span className="text-sm font-medium text-muted">lb</span>
+            </p>
           ) : (
-            <p className="mt-1 text-sm text-muted">No weigh-ins yet.</p>
+            <p className="text-sm text-muted">No weigh-ins yet</p>
           )}
+          {details.length > 0 && <p className="truncate text-xs text-muted">{details.join(" · ")}</p>}
         </div>
         <button
           type="button"
           onClick={openSheet}
-          className="min-h-11 shrink-0 rounded-xl border border-border px-4 text-sm font-semibold text-accent active:opacity-70"
+          className="min-h-11 shrink-0 rounded-lg border border-border px-3 text-sm font-semibold text-accent active:opacity-70"
         >
-          {loggedToday ? "Update" : "Log weight"}
+          {loggedToday ? "Update" : "Log"}
         </button>
       </div>
-
-      {target !== null && (
-        <p className="mt-3 border-t border-border pt-3 text-sm tabular-nums">
-          <span className="text-muted">Target</span> <span className="font-semibold">{formatWeightLb(target)} lb</span>
-          {gap && (
-            <span className={`ml-2 ${gap.atTarget ? "font-semibold text-accent" : "text-muted"}`}>
-              · {gap.atTarget ? "🎯 " : ""}
-              {gap.text}
-            </span>
-          )}
-        </p>
-      )}
 
       <BottomSheet open={open} onClose={() => setOpen(false)} label="Log weight">
         <div className="flex items-start justify-between gap-3">
