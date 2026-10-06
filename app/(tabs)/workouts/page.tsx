@@ -6,6 +6,7 @@ import ExtraCheck from "@/components/ExtraCheck";
 import FitnessHeader from "@/components/FitnessHeader";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
+import ThreeRepMaxes from "@/components/ThreeRepMaxes";
 import TanningLog from "@/components/TanningLog";
 import WeightLog, { type LatestWeight } from "@/components/WeightLog";
 import WeeklyCardioGoals from "@/components/WeeklyCardioGoals";
@@ -22,6 +23,7 @@ import {
 import { loadDoneDates } from "@/lib/workouts/activity";
 import { latestSets, type HistoryRow } from "@/lib/workouts/history";
 import { defaultRepsFor, defaultWeightFor } from "@/lib/workouts/logging";
+import { THREE_REP_MAX_LIFTS, MIN_REPS_FOR_MAX } from "@/lib/workouts/maxes";
 import { loadWorkoutDays } from "@/lib/workouts/seed";
 
 export default async function WorkoutsPage({
@@ -122,6 +124,25 @@ export default async function WorkoutsPage({
     if (targetRow?.target_weight_lb != null) targetWeight = Number(targetRow.target_weight_lb);
   }
 
+  // 3-rep maxes on lifting days: for each lift, the heaviest weight logged for 3+ reps (any date).
+  let threeRepMaxes: (number | null)[] = [];
+  if (today?.kind === "lift") {
+    threeRepMaxes = await Promise.all(
+      THREE_REP_MAX_LIFTS.map(async (lift) => {
+        const { data } = await supabase
+          .from("workout_sets")
+          .select("weight")
+          .ilike("exercise_name", lift.exerciseName) // no wildcards: same name, any capitalization
+          .gte("reps", MIN_REPS_FOR_MAX)
+          .not("weight", "is", null)
+          .order("weight", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return data ? Number(data.weight) : null;
+      }),
+    );
+  }
+
   // Tuesday and Thursday also have a quiet tanning log: the minutes saved for this date, if any,
   // and the most recent earlier session so you can remember what you did last time.
   const showTanning = isTanningDay(isoWeekday(date));
@@ -213,6 +234,11 @@ export default async function WorkoutsPage({
     <div className="space-y-6">
       <FitnessHeader date={date} days={days} doneDates={doneDates} />
 
+      {today?.kind === "cardio" && (
+        <WeightLog key={date} date={date} latest={latestWeight} target={targetWeight} />
+      )}
+      {today?.kind === "lift" && <ThreeRepMaxes maxes={threeRepMaxes} />}
+
       <section className="space-y-1">
         <h2 className="text-lg font-semibold">
           {formatWeekday(date)}
@@ -241,7 +267,6 @@ export default async function WorkoutsPage({
         <>
           <CardioLogger date={date} logs={cardioLogs} />
           <WeeklyCardioGoals totals={weekTotals} goals={weeklyGoals} />
-          <WeightLog key={date} date={date} latest={latestWeight} target={targetWeight} />
         </>
       )}
 
