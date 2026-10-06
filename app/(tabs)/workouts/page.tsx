@@ -7,6 +7,7 @@ import FitnessHeader from "@/components/FitnessHeader";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
 import TanningLog from "@/components/TanningLog";
+import WeightLog, { type LatestWeight } from "@/components/WeightLog";
 import WeeklyCardioGoals from "@/components/WeeklyCardioGoals";
 import { weeklyTotals, type WeeklyGoals } from "@/lib/cardioGoals";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
@@ -101,6 +102,24 @@ export default async function WorkoutsPage({
       unit: row.distance_unit as string | null,
       minutes: row.duration_minutes === null ? null : Number(row.duration_minutes),
     }));
+  }
+
+  // Weight on cardio days: your latest weigh-in (on or before this date) and your target.
+  let latestWeight: LatestWeight | null = null;
+  let targetWeight: number | null = null;
+  if (today?.kind === "cardio") {
+    const [{ data: latest }, { data: targetRow }] = await Promise.all([
+      supabase
+        .from("weight_logs")
+        .select("log_date, weight_lb")
+        .lte("log_date", date)
+        .order("log_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("profiles").select("target_weight_lb").eq("id", userId).maybeSingle(),
+    ]);
+    if (latest) latestWeight = { date: latest.log_date as string, pounds: Number(latest.weight_lb) };
+    if (targetRow?.target_weight_lb != null) targetWeight = Number(targetRow.target_weight_lb);
   }
 
   // Tuesday and Thursday also have a quiet tanning log: the minutes saved for this date, if any.
@@ -214,6 +233,7 @@ export default async function WorkoutsPage({
         <>
           <CardioLogger date={date} logs={cardioLogs} />
           <WeeklyCardioGoals totals={weekTotals} goals={weeklyGoals} />
+          <WeightLog key={date} date={date} latest={latestWeight} target={targetWeight} />
         </>
       )}
 

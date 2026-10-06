@@ -10,6 +10,7 @@ export type Goals = {
   weekly_run_miles: number | null;
   weekly_cycle_miles: number | null;
   weekly_swim_yards: number | null;
+  target_weight_lb: number | null;
 };
 
 export type GoalsResult = { ok: true; values: Goals } | { ok: false; message: string };
@@ -23,6 +24,7 @@ export const GOAL_LIMITS = {
   weekly_run_miles: { min: 0.1, max: 500 },
   weekly_cycle_miles: { min: 0.1, max: 500 },
   weekly_swim_yards: { min: 1, max: 100000 },
+  target_weight_lb: { min: 70, max: 500 },
 } as const;
 
 // Blank -> null; a number in range -> the whole number; anything else -> "invalid".
@@ -50,6 +52,17 @@ function readDecimalGoal(
   const n = Number(text);
   if (!Number.isFinite(n)) return "invalid";
   const rounded = Math.round(n * 100) / 100;
+  return rounded < min || rounded > max ? "invalid" : rounded;
+}
+
+// Like readDecimalGoal, but keeps one decimal (a weight like 175.5).
+function readWeightGoal(raw: FormDataEntryValue | null): number | null | "invalid" {
+  const text = typeof raw === "string" ? raw.trim().replace(",", ".") : "";
+  if (text === "") return null;
+  const n = Number(text);
+  if (!Number.isFinite(n)) return "invalid";
+  const rounded = Math.round(n * 10) / 10;
+  const { min, max } = GOAL_LIMITS.target_weight_lb;
   return rounded < min || rounded > max ? "invalid" : rounded;
 }
 
@@ -91,6 +104,11 @@ export function parseGoalsForm(formData: FormData): GoalsResult {
     return { ok: false, message: "The weekly swim goal must be whole yards from 1 to 100,000, or left blank." };
   }
 
+  const targetWeight = readWeightGoal(formData.get("target_weight_lb"));
+  if (targetWeight === "invalid") {
+    return { ok: false, message: "Target weight must be between 70 and 500 lb, or left blank." };
+  }
+
   return {
     ok: true,
     values: {
@@ -99,6 +117,7 @@ export function parseGoalsForm(formData: FormData): GoalsResult {
       weekly_run_miles: run,
       weekly_cycle_miles: cycle,
       weekly_swim_yards: swim,
+      target_weight_lb: targetWeight,
     },
   };
 }

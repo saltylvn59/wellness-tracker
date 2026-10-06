@@ -23,6 +23,7 @@ describe("parseGoalsForm", () => {
         weekly_run_miles: null,
         weekly_cycle_miles: null,
         weekly_swim_yards: null,
+        target_weight_lb: null,
       },
     });
   });
@@ -41,6 +42,7 @@ describe("parseGoalsForm", () => {
         weekly_run_miles: null,
         weekly_cycle_miles: null,
         weekly_swim_yards: null,
+        target_weight_lb: null,
       },
     });
   });
@@ -55,6 +57,7 @@ describe("parseGoalsForm", () => {
       weekly_run_miles: null,
       weekly_cycle_miles: null,
       weekly_swim_yards: null,
+      target_weight_lb: null,
     });
   });
 
@@ -104,6 +107,7 @@ describe("weekly cardio goals", () => {
       weekly_run_miles: null,
       weekly_cycle_miles: null,
       weekly_swim_yards: null,
+      target_weight_lb: null,
     });
   });
 
@@ -127,5 +131,29 @@ describe("weekly cardio goals", () => {
     }
     expect(parseGoalsForm(form({ ...base, weekly_run_miles: "500" })).ok).toBe(true);
     expect(parseGoalsForm(form({ ...base, weekly_swim_yards: "100000" })).ok).toBe(true);
+  });
+});
+
+describe("target weight", () => {
+  const base = { calorie_goal: "2000" };
+
+  it("accepts a weight with one decimal, including a comma", () => {
+    const a = parseGoalsForm(form({ ...base, target_weight_lb: "175.5" }));
+    expect(a.ok && a.values.target_weight_lb).toBe(175.5);
+    const b = parseGoalsForm(form({ ...base, target_weight_lb: "170,25" }));
+    expect(b.ok && b.values.target_weight_lb).toBe(170.3);
+  });
+
+  it("treats blank as no target", () => {
+    const result = parseGoalsForm(form({ ...base, target_weight_lb: " " }));
+    expect(result.ok && result.values.target_weight_lb).toBeNull();
+  });
+
+  it("rejects weights outside 70 to 500 lb or non-numbers", () => {
+    for (const bad of ["69", "501", "0", "-150", "heavy"]) {
+      expect(parseGoalsForm(form({ ...base, target_weight_lb: bad })).ok).toBe(false);
+    }
+    expect(parseGoalsForm(form({ ...base, target_weight_lb: "70" })).ok).toBe(true);
+    expect(parseGoalsForm(form({ ...base, target_weight_lb: "500" })).ok).toBe(true);
   });
 });
