@@ -28,6 +28,8 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 - Row-level security on every Supabase table; every table is scoped to the signed-in user.
 - Dates are stored as the user's local calendar date, not UTC timestamps, so daily totals and streaks don't break at midnight.
 - Keep pure logic (streaks, goal status) in `lib/` with unit tests.
+- Server actions share `lib/actionResult.ts` (the `ActionResult` type, `currentUserId`, `failedSave`); don't repeat the sign-in and error boilerplate. Those lib files use relative imports so vitest can load them.
+- The Fitness page reads its data through `lib/workouts/queries.ts`: one loader per kind of day (lift, cardio, tanning), each running its queries in parallel. Add new reads there, not inline in `page.tsx`.
 - Small, focused git commits with clear messages.
 
 - This is Next.js 16 (newer than most tutorials). Check the bundled docs in `node_modules/next/dist/docs/` before using a Next.js API (see `AGENTS.md`).

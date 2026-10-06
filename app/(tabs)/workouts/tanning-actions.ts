@@ -1,21 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { currentUserId, failedSave, INVALID_DATE, SAVE_FAILED, SIGN_IN_AGAIN, type ActionResult } from "@/lib/actionResult";
 import { isoWeekday, isValidDateKey } from "@/lib/dates";
-import { DATABASE_BEHIND_MESSAGE, isMissingSchemaError } from "@/lib/dbErrors";
 import { isTanningDay, parseTanningMinutes } from "@/lib/tanning";
 import { createClient } from "@/lib/supabase/server";
 
-export type TanningResult = { ok: true } | { ok: false; message: string };
-
-const FAILED: TanningResult = { ok: false, message: "Couldn't save. Please try again." };
-
 // Saves the tanning time for a day. Logging again on the same day replaces the minutes.
-export async function saveTanning(input: { date: string; minutes: number }): Promise<TanningResult> {
+export async function saveTanning(input: { date: string; minutes: number }): Promise<ActionResult> {
   // Never trust the browser: check everything it sent.
-  if (typeof input.date !== "string" || !isValidDateKey(input.date)) {
-    return { ok: false, message: "Invalid date." };
-  }
+  if (!isValidDateKey(input.date)) return INVALID_DATE;
   if (!isTanningDay(isoWeekday(input.date))) {
     return { ok: false, message: "Tanning is logged on Tuesdays and Thursdays." };
   }
@@ -23,26 +17,25 @@ export async function saveTanning(input: { date: string; minutes: number }): Pro
   if (minutes === null) return { ok: false, message: "Pick 5 to 15 minutes." };
 
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
-  if (!userId) return { ok: false, message: "Please sign in again." };
+  const userId = await currentUserId(supabase);
+  if (!userId) return SIGN_IN_AGAIN;
 
   const { error } = await supabase
     .from("tanning_logs")
     .upsert({ user_id: userId, log_date: input.date, minutes }, { onConflict: "user_id,log_date" });
-  if (error) return isMissingSchemaError(error) ? { ok: false, message: DATABASE_BEHIND_MESSAGE } : FAILED;
+  if (error) return failedSave(error);
 
   revalidatePath("/workouts");
   return { ok: true };
 }
 
-export async function deleteTanning(date: string): Promise<TanningResult> {
-  if (typeof date !== "string" || !isValidDateKey(date)) return { ok: false, message: "Invalid date." };
+export async function deleteTanning(date: string): Promise<ActionResult> {
+  if (!isValidDateKey(date)) return INVALID_DATE;
 
   const supabase = await createClient();
   // Row Level Security means this can only ever delete your own log.
   const { error } = await supabase.from("tanning_logs").delete().eq("log_date", date);
-  if (error) return FAILED;
+  if (error) return SAVE_FAILED;
 
   revalidatePath("/workouts");
   return { ok: true };

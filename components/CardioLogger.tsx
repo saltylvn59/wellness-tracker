@@ -10,15 +10,8 @@ import {
   readNumberField,
   summarizeCardio,
   type CardioKind,
+  type CardioLogRow,
 } from "@/lib/cardio";
-
-export type CardioLogRow = {
-  id: string;
-  kind: CardioKind;
-  distance: number | null;
-  unit: string | null;
-  minutes: number | null;
-};
 
 // text-base = 16px: smaller text makes iPhone Safari zoom in when you tap a field.
 const inputClass =

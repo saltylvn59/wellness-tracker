@@ -12,6 +12,10 @@ import {
 } from "./dates";
 
 describe("isValidDateKey", () => {
+  it("rejects anything that isn't a string", () => {
+    for (const bad of [undefined, null, 20261005, {}, ["2026-10-05"]]) expect(isValidDateKey(bad)).toBe(false);
+  });
+
   it("accepts real dates", () => {
     expect(isValidDateKey("2026-10-05")).toBe(true);
     expect(isValidDateKey("2028-02-29")).toBe(true); // leap year

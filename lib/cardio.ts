@@ -11,6 +11,15 @@ export const CARDIO: Record<CardioKind, { label: string; icon: string; unit: Dis
   swim: { label: "Swim", icon: "🏊", unit: "yd" },
 };
 
+// One logged cardio session, as shown in the list on a cardio day.
+export type CardioLogRow = {
+  id: string;
+  kind: CardioKind;
+  distance: number | null;
+  unit: string | null;
+  minutes: number | null;
+};
+
 export const MAX_DISTANCE: Record<DistanceUnit, number> = { mi: 500, yd: 100000 };
 export const MAX_MINUTES = 1440; // 24 hours
 
