@@ -8,7 +8,7 @@ export type WorkoutStripDay = {
   done: boolean; // you logged a workout or cardio that day
 };
 
-const KIND_ICON: Record<DayKind, string> = { lift: "🏋️", cardio: "🏃", rest: "😴" };
+const KIND_ICON: Record<DayKind, string> = { lift: "🏋️", cardio: "🏃", rest: "🧘" };
 const KIND_NAME: Record<DayKind, string> = { lift: "Lifting", cardio: "Cardio", rest: "Rest" };
 
 // The week at a glance: day name, date number, and what kind of day it is.
