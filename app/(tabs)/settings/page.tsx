@@ -16,16 +16,26 @@ export default async function SettingsPage() {
     .eq("id", userId ?? "")
     .maybeSingle();
 
+  // Target weight is read on its own, so Settings still loads if its database step isn't run yet.
+  const { data: targetRow } = await supabase
+    .from("profiles")
+    .select("target_weight_lb")
+    .eq("id", userId ?? "")
+    .maybeSingle();
+
   // Before you've saved anything, the calorie goal is blank (null).
-  const goals = (profile ?? {
-    calorie_goal: null,
-    protein_goal_g: null,
-    carb_goal_g: null,
-    fat_goal_g: null,
-    weekly_run_miles: null,
-    weekly_cycle_miles: null,
-    weekly_swim_yards: null,
-  }) as unknown as Goals;
+  const goals = {
+    ...(profile ?? {
+      calorie_goal: null,
+      protein_goal_g: null,
+      carb_goal_g: null,
+      fat_goal_g: null,
+      weekly_run_miles: null,
+      weekly_cycle_miles: null,
+      weekly_swim_yards: null,
+    }),
+    target_weight_lb: targetRow?.target_weight_lb == null ? null : Number(targetRow.target_weight_lb),
+  } as unknown as Goals;
 
   return (
     <div className="space-y-6">
