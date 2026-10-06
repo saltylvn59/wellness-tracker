@@ -7,7 +7,7 @@ export const MIN_REPS_FOR_MAX = 3;
 
 // Each lift lists the plan names that count for it (singular or plural).
 export const THREE_REP_MAX_LIFTS = [
-  { label: "Deadlift", exerciseNames: ["Deadlift", "Deadlifts"] },
   { label: "Incline Press", exerciseNames: ["Incline press", "Incline presses"] },
+  { label: "Deadlift", exerciseNames: ["Deadlift", "Deadlifts"] },
   { label: "Squat", exerciseNames: ["Squat", "Squats"] },
 ] as const;
