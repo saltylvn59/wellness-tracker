@@ -6,10 +6,12 @@ import ExtraCheck from "@/components/ExtraCheck";
 import FitnessHeader from "@/components/FitnessHeader";
 import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
+import TanningLog from "@/components/TanningLog";
 import WeeklyCardioGoals from "@/components/WeeklyCardioGoals";
 import { weeklyTotals, type WeeklyGoals } from "@/lib/cardioGoals";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey, weekDays } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { isTanningDay } from "@/lib/tanning";
 import {
   connectorAfter,
   formatRest,
@@ -99,6 +101,18 @@ export default async function WorkoutsPage({
       unit: row.distance_unit as string | null,
       minutes: row.duration_minutes === null ? null : Number(row.duration_minutes),
     }));
+  }
+
+  // Tuesday and Thursday also have a quiet tanning log: the minutes saved for this date, if any.
+  const showTanning = isTanningDay(isoWeekday(date));
+  let tanningMinutes: number | null = null;
+  if (showTanning) {
+    const { data: tan } = await supabase
+      .from("tanning_logs")
+      .select("minutes")
+      .eq("log_date", date)
+      .maybeSingle();
+    tanningMinutes = tan ? Number(tan.minutes) : null;
   }
 
   // Whether today's sauna and stretch are ticked (lifting days only).
@@ -202,6 +216,8 @@ export default async function WorkoutsPage({
           <WeeklyCardioGoals totals={weekTotals} goals={weeklyGoals} />
         </>
       )}
+
+      {showTanning && <TanningLog key={date} date={date} minutes={tanningMinutes} />}
 
       {today?.kind === "lift" && (
         <section className="space-y-3">
