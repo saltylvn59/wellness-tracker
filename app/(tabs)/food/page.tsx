@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import CalorieRing from "@/components/CalorieRing";
+import CaloriesCard from "@/components/CaloriesCard";
 import GoToToday from "@/components/GoToToday";
-import MacroRow from "@/components/MacroRow";
+import MacrosCard from "@/components/MacrosCard";
 import NutritionHeader from "@/components/NutritionHeader";
 import WaterTracker from "@/components/WaterTracker";
 import { type WeekDay } from "@/components/WeekStrip";
@@ -56,7 +56,6 @@ export default async function FoodPage({
     carbs: (profile?.carb_goal_g ?? null) as number | null,
     fat: (profile?.fat_goal_g ?? null) as number | null,
   };
-  const hasMacroGoals = Object.values(macroGoals).some((g) => g !== null);
   const weekEntries = (rows ?? []) as FoodEntry[];
   const weekSummary: WeekDay[] = week.map((dateKey) => {
     const dayEntries = weekEntries.filter((e) => e.entry_date === dateKey);
@@ -72,42 +71,23 @@ export default async function FoodPage({
 
   return (
     <div className="space-y-6">
-      <NutritionHeader date={date} goal={goal} week={weekSummary} foodDates={foodDates} />
+      <NutritionHeader
+        date={date}
+        goal={goal}
+        week={weekSummary}
+        foodDates={foodDates}
+        macros={
+          <MacrosCard
+            macros={[
+              { label: "Protein", grams: totals.protein_g, goal: macroGoals.protein },
+              { label: "Carbs", grams: totals.carbs_g, goal: macroGoals.carbs },
+              { label: "Fat", grams: totals.fat_g, goal: macroGoals.fat },
+            ]}
+          />
+        }
+      />
 
-      <section className="rounded-2xl bg-card p-4">
-        <div className="flex items-center gap-4">
-          <div className="shrink-0 text-center">
-            <CalorieRing calories={totals.calories} goal={goal} status={status} />
-            <p className="mt-1 text-xs">
-              {goal ? (
-                totals.calories > goal ? (
-                  <span className="font-semibold text-danger">{fmt(totals.calories - goal)} over</span>
-                ) : (
-                  <span className="text-muted">{fmt(goal - totals.calories)} left</span>
-                )
-              ) : (
-                <Link href="/settings" className="font-medium text-accent underline">
-                  Set a calorie goal
-                </Link>
-              )}
-            </p>
-          </div>
-
-          <div className="min-w-0 flex-1 space-y-3">
-            <MacroRow label="Protein" grams={totals.protein_g} goal={macroGoals.protein} />
-            <MacroRow label="Carbs" grams={totals.carbs_g} goal={macroGoals.carbs} />
-            <MacroRow label="Fat" grams={totals.fat_g} goal={macroGoals.fat} />
-          </div>
-        </div>
-        {!hasMacroGoals && (
-          <p className="mt-3 text-center text-xs text-muted">
-            <Link href="/settings" className="font-medium text-accent underline">
-              Set macro goals
-            </Link>{" "}
-            to see progress for each.
-          </p>
-        )}
-      </section>
+      <CaloriesCard calories={totals.calories} goal={goal} status={status} />
 
       <WaterTracker date={date} totalOz={waterTotal} />
 
