@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSyncExternalStore } from "react";
-import { getLocalDateKey } from "@/lib/dates";
+import { useToday } from "@/components/useToday";
 
 // Three tabs, left to right: Weight, Fitness (lifting, cardio, sauna and stretch, all on
 // the calendar), and Nutrition.
@@ -13,8 +12,6 @@ const tabs = [
   { href: "/food", matches: ["/food"], label: "Nutrition", icon: "🍎" },
 ];
 
-const noSubscribe = () => () => {};
-
 // "use client" (above) means this runs in the browser, which we need here
 // because it checks which page is open (usePathname) to highlight the tab, and
 // reads today's date from the phone's clock.
@@ -22,7 +19,7 @@ export default function TabBar() {
   const pathname = usePathname();
   // Each tab links straight to today (e.g. /workouts?date=2026-10-09). Without the date, the
   // page has to ask the phone for it and load a second time. (null while drawn on the server.)
-  const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
+  const today = useToday();
 
   return (
     <nav

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useToday } from "@/components/useToday";
 import { formatDayNumber, formatFullDate, formatWeekdayShort } from "@/lib/dates";
 import { getGoalStatus } from "@/lib/goalStatus";
 
@@ -6,7 +9,9 @@ export type WeekDay = { dateKey: string; calories: number; hasEntries: boolean }
 
 // The whole week at a glance: day name + date number, with a ring that is
 // green (at/under goal) or red (over goal) for days that have food logged.
-// Tap a day to jump to it. The selected day is highlighted.
+// Laid out like the Fitness calendar (same height, same spacing), and days before
+// today are dimmed the same way. Tap a day to jump to it. The selected day is highlighted.
+// "use client" because "today" comes from the phone's clock; the server can't know it.
 export default function WeekStrip({
   days,
   selected,
@@ -16,10 +21,13 @@ export default function WeekStrip({
   selected: string;
   goal: number | null;
 }) {
+  const today = useToday(); // null on the server: nothing is dimmed until the phone says what day it is
+
   return (
     <nav aria-label="Week" className="flex gap-1">
       {days.map((day) => {
         const isSelected = day.dateKey === selected;
+        const isPast = today !== null && day.dateKey < today; // "YYYY-MM-DD" keys sort like dates
         const status = day.hasEntries ? getGoalStatus(day.calories, goal) : null;
         const ring =
           status === "under"
@@ -36,19 +44,23 @@ export default function WeekStrip({
             href={`/food?date=${day.dateKey}`}
             aria-current={isSelected ? "date" : undefined}
             aria-label={formatFullDate(day.dateKey)}
-            className={`flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 active:opacity-70 ${
+            className={`flex min-h-20 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 active:opacity-70 ${
               isSelected ? "bg-card" : ""
             }`}
           >
-            <span className={`text-xs ${isSelected ? "font-semibold text-foreground" : "text-muted"}`}>
-              {formatWeekdayShort(day.dateKey)}
-            </span>
-            <span
-              className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-base ${ring} ${
-                isSelected ? "font-bold" : "font-medium"
-              }`}
-            >
-              {formatDayNumber(day.dateKey)}
+            <span className={`flex flex-col items-center gap-1 ${isPast ? "opacity-40" : ""}`}>
+              <span className={`text-xs ${isSelected ? "font-semibold text-foreground" : "text-muted"}`}>
+                {formatWeekdayShort(day.dateKey)}
+              </span>
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-base ${ring} ${
+                  isSelected ? "font-bold" : "font-medium"
+                }`}
+              >
+                {formatDayNumber(day.dateKey)}
+              </span>
+              {/* An empty row where Fitness shows its day icons, so both calendars are the same height. */}
+              <span className="h-4" aria-hidden="true" />
             </span>
           </Link>
         );

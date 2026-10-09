@@ -1,10 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { getLocalDateKey } from "@/lib/dates";
 import { computeStreak, milestoneMessage, nextMilestone } from "@/lib/streak";
-
-const noSubscribe = () => () => {};
+import { useToday } from "@/components/useToday";
 
 // A streak badge, used for both workouts (Fitness) and food logging (Nutrition).
 // It needs to know today's date on YOUR phone, so it works it out in the browser
@@ -20,7 +17,7 @@ export default function StreakBadge({
   label?: string; // read aloud by screen readers
   startHint?: string; // shown when you have no streak yet
 }) {
-  const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
+  const today = useToday();
   if (!today) return <div className="h-[72px]" aria-hidden="true" />; // keeps the layout steady
 
   const { current, longest, doneToday } = computeStreak(doneDates, today, new Set(restWeekdays));
