@@ -9,8 +9,8 @@ export type WeekDay = { dateKey: string; calories: number; hasEntries: boolean }
 
 // The whole week at a glance: day name + date number, with a ring that is
 // green (at/under goal) or red (over goal) for days that have food logged.
-// Laid out like the Fitness calendar (same height, same spacing), and days before
-// today are dimmed the same way. Tap a day to jump to it. The selected day is highlighted.
+// Laid out like the Fitness calendar (same height, same spacing): a ✅ under each day
+// you logged food, and days before today dimmed the same way. Tap a day to jump to it. The selected day is highlighted.
 // "use client" because "today" comes from the phone's clock; the server can't know it.
 export default function WeekStrip({
   days,
@@ -43,7 +43,7 @@ export default function WeekStrip({
             key={day.dateKey}
             href={`/food?date=${day.dateKey}`}
             aria-current={isSelected ? "date" : undefined}
-            aria-label={formatFullDate(day.dateKey)}
+            aria-label={`${formatFullDate(day.dateKey)}${day.hasEntries ? ", food logged" : ""}`}
             className={`flex min-h-20 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 active:opacity-70 ${
               isSelected ? "bg-card" : ""
             }`}
@@ -59,8 +59,11 @@ export default function WeekStrip({
               >
                 {formatDayNumber(day.dateKey)}
               </span>
-              {/* An empty row where Fitness shows its day icons, so both calendars are the same height. */}
-              <span className="h-4" aria-hidden="true" />
+              {/* A ✅ on days you logged food, in the same row and size as the Fitness day icons,
+                  so both calendars match. Days with nothing logged keep the row empty. */}
+              <span className="h-4 text-base leading-none" aria-hidden="true">
+                {day.hasEntries ? "✅" : ""}
+              </span>
             </span>
           </Link>
         );
