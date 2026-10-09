@@ -8,7 +8,6 @@ import GoToToday from "@/components/GoToToday";
 import LogExercise from "@/components/LogExercise";
 import ThreeRepMaxes from "@/components/ThreeRepMaxes";
 import TanningLog from "@/components/TanningLog";
-import WeightLog from "@/components/WeightLog";
 import WeeklyCardioGoals from "@/components/WeeklyCardioGoals";
 import { currentUserId } from "@/lib/actionResult";
 import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey } from "@/lib/dates";
@@ -57,7 +56,6 @@ export default async function WorkoutsPage({
     <div className="space-y-6">
       <FitnessHeader date={date} days={days} doneDates={doneDates} />
 
-      {cardio && <WeightLog date={date} latest={cardio.latestWeight} target={cardio.targetWeight} />}
       {lift && <ThreeRepMaxes maxes={lift.threeRepMaxes} />}
 
       <section className="space-y-1">

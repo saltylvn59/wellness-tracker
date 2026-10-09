@@ -1,0 +1,89 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { currentUserId, failedSave, INVALID_DATE, SAVE_FAILED, SIGN_IN_AGAIN, type ActionResult } from "@/lib/actionResult";
+import { takeAiRequest } from "@/lib/ai/dailyLimit";
+import { suggestWeightPace } from "@/lib/ai/gemini";
+import { daysBetween, isValidDateKey } from "@/lib/dates";
+import { parseWeight } from "@/lib/weight";
+import { autoPace, coachKey, goalDirection, goalNumbers, recentTrend } from "@/lib/weightPlan";
+import { loadWeightData } from "@/lib/weightQueries";
+import { createClient } from "@/lib/supabase/server";
+
+// Saves your weigh-in for a day. Weighing in again on the same day replaces the number.
+export async function saveWeight(input: { date: string; weight: number }): Promise<ActionResult> {
+  // Never trust the browser: check everything it sent.
+  if (!isValidDateKey(input.date)) return INVALID_DATE;
+  const weight = parseWeight(input.weight);
+  if (weight === null) return { ok: false, message: "Pick a weight from 70 to 500 lb." };
+
+  const supabase = await createClient();
+  const userId = await currentUserId(supabase);
+  if (!userId) return SIGN_IN_AGAIN;
+
+  const { error } = await supabase
+    .from("weight_logs")
+    .upsert({ user_id: userId, log_date: input.date, weight_lb: weight }, { onConflict: "user_id,log_date" });
+  if (error) return failedSave(error);
+
+  revalidatePath("/weight");
+  return { ok: true };
+}
+
+export async function deleteWeight(date: string): Promise<ActionResult> {
+  if (!isValidDateKey(date)) return INVALID_DATE;
+
+  const supabase = await createClient();
+  // Row Level Security means this can only ever delete your own weigh-in.
+  const { error } = await supabase.from("weight_logs").delete().eq("log_date", date);
+  if (error) return SAVE_FAILED;
+
+  revalidatePath("/weight");
+  return { ok: true };
+}
+
+/**
+ * Brings the saved weekly pace up to date. The Weight tab calls this by itself when
+ * your numbers have changed since the last suggestion (a new weigh-in or a new target).
+ * It asks the AI; if the AI is busy or you're over today's AI limit, it uses the
+ * built-in safe pace instead, so the screen always has numbers.
+ */
+export async function refreshWeightPlan(today: string): Promise<ActionResult> {
+  if (!isValidDateKey(today)) return INVALID_DATE;
+
+  const supabase = await createClient();
+  const userId = await currentUserId(supabase);
+  if (!userId) return SIGN_IN_AGAIN;
+
+  const data = await loadWeightData(supabase, userId, today);
+  const numbers = goalNumbers(data);
+  if (data.databaseBehind || !numbers) return { ok: true }; // nothing to plan yet
+  const direction = goalDirection(numbers.current, numbers.target);
+  if (direction === "done") return { ok: true }; // at your target: no pace needed
+
+  const key = coachKey(numbers.start, numbers.current, numbers.target);
+  if (data.plan.key === key) return { ok: true }; // already up to date
+
+  const advice = (await takeAiRequest(supabase, userId))
+    ? await suggestWeightPace({
+        ...numbers,
+        direction,
+        trend: recentTrend(data.logs),
+        weeksTracked: data.first ? Math.max(0, Math.floor(daysBetween(data.first.date, today) / 7)) : 0,
+      })
+    : null;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      weight_pace_lb_week: advice?.pace ?? autoPace(numbers.current, direction),
+      weight_coach_note: advice?.note || null,
+      weight_coach_source: advice ? "ai" : "auto",
+      weight_coach_key: key,
+    })
+    .eq("id", userId);
+  if (error) return failedSave(error);
+
+  revalidatePath("/weight");
+  return { ok: true };
+}

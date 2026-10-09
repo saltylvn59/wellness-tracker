@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  describeTargetGap,
   formatWeightLb,
   joinWeight,
   parseWeight,
@@ -49,15 +48,9 @@ describe("parseWeight", () => {
   });
 });
 
-describe("formatWeightLb and describeTargetGap", () => {
+describe("formatWeightLb", () => {
   it("shows one decimal", () => {
     expect(formatWeightLb(185.4)).toBe("185.4");
     expect(formatWeightLb(185)).toBe("185.0");
-  });
-
-  it("says how far you are from the target, in either direction", () => {
-    expect(describeTargetGap(185.4, 177)).toEqual({ atTarget: false, text: "8.4 lb to go" });
-    expect(describeTargetGap(165, 170)).toEqual({ atTarget: false, text: "5.0 lb to go" });
-    expect(describeTargetGap(170, 170)).toEqual({ atTarget: true, text: "At your target" });
   });
 });

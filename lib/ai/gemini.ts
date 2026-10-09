@@ -6,6 +6,14 @@ import {
   SYSTEM_PROMPT,
   type AiEstimate,
 } from "./nutrition";
+import {
+  COACH_JSON_SCHEMA,
+  COACH_SYSTEM_PROMPT,
+  coachPrompt,
+  parseCoachAdvice,
+  type CoachAdvice,
+  type CoachInput,
+} from "./weightCoach";
 
 // Time limits. The API route allows 30 seconds in total, so we stop trying new
 // models once ~24 seconds have passed, and never wait more than 9 seconds on one.
@@ -33,11 +41,7 @@ const BUSY: EstimateResult = {
 };
 
 // This is the ONLY file that talks to Google. To switch AI providers later,
-// replace the body of this function and keep the same input and result shapes.
-//
-// Google's free-tier models are sometimes overloaded ("high demand", HTTP 503), slow,
-// or retired. So we try a list of free models in order (see modelChain.ts) and use
-// the first one that answers. You can put your own favorite first with GEMINI_MODEL.
+// replace the bodies of these functions and keep the same input and result shapes.
 export async function estimateNutrition(input: EstimateInput): Promise<EstimateResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -59,9 +63,63 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
       : "Estimate the nutrition for the food or drink in this photo.",
   });
 
-  const ai = new GoogleGenAI({ apiKey });
+  return runModelChain<EstimateResult>({
+    apiKey,
+    parts,
+    systemInstruction: SYSTEM_PROMPT,
+    schema: NUTRITION_JSON_SCHEMA,
+    busy: BUSY,
+    stopped: {
+      ok: false,
+      reason: "failed",
+      message: "The AI couldn't estimate that. Please try again, or enter it manually.",
+    },
+    // A real answer (including "that isn't food") is final. An unreadable one
+    // means this model had a bad moment, so give the next model a try.
+    read: (text) => {
+      const parsed = parseAiNutrition(text);
+      return parsed.ok || parsed.reason === "not_food" ? { done: parsed } : { retry: parsed };
+    },
+  });
+}
+
+/**
+ * Asks the AI for a healthy weekly pace toward your weight target, plus one line of
+ * coaching. Returns null when the AI isn't set up, is busy, or sent something unusable;
+ * the app then uses its built-in pace instead (lib/weightPlan.ts).
+ */
+export async function suggestWeightPace(input: CoachInput): Promise<CoachAdvice | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  return runModelChain<CoachAdvice | null>({
+    apiKey,
+    parts: [{ text: coachPrompt(input) }],
+    systemInstruction: COACH_SYSTEM_PROMPT,
+    schema: COACH_JSON_SCHEMA,
+    busy: null,
+    stopped: null,
+    read: (text) => {
+      const advice = parseCoachAdvice(text, input.direction);
+      return advice ? { done: advice } : { retry: null };
+    },
+  });
+}
+
+// Google's free-tier models are sometimes overloaded ("high demand", HTTP 503), slow,
+// or retired. So we try a list of free models in order (see modelChain.ts) and use
+// the first one that answers. You can put your own favorite first with GEMINI_MODEL.
+async function runModelChain<T>(options: {
+  apiKey: string;
+  parts: Part[];
+  systemInstruction: string;
+  schema: object;
+  busy: T; // the answer when every model was busy or we ran out of time
+  stopped: T; // the answer when a problem means no model will work (like a bad key)
+  read: (text: string | undefined) => { done: T } | { retry: T }; // check one model's reply
+}): Promise<T> {
+  const ai = new GoogleGenAI({ apiKey: options.apiKey });
   const deadline = Date.now() + TOTAL_BUDGET_MS;
-  let lastResult: EstimateResult = BUSY;
+  let lastResult = options.busy;
 
   for (const model of buildModelChain(process.env.GEMINI_MODEL)) {
     const remaining = deadline - Date.now();
@@ -70,11 +128,11 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
     try {
       const response = await ai.models.generateContent({
         model,
-        contents: [{ role: "user", parts }],
+        contents: [{ role: "user", parts: options.parts }],
         config: {
-          systemInstruction: SYSTEM_PROMPT,
+          systemInstruction: options.systemInstruction,
           responseMimeType: "application/json",
-          responseJsonSchema: NUTRITION_JSON_SCHEMA,
+          responseJsonSchema: options.schema,
           temperature: 0.2,
           maxOutputTokens: 2048,
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, // quick answers, fewer tokens
@@ -82,11 +140,9 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
         },
       });
 
-      const parsed = parseAiNutrition(response.text);
-      // A real answer (including "that isn't food") is final. An unreadable one
-      // means this model had a bad moment, so give the next model a try.
-      if (parsed.ok || parsed.reason === "not_food") return parsed;
-      lastResult = parsed;
+      const outcome = options.read(response.text);
+      if ("done" in outcome) return outcome.done;
+      lastResult = outcome.retry;
     } catch (error) {
       const status = error instanceof ApiError ? error.status : undefined;
       const message = error instanceof Error ? error.message : "";
@@ -98,14 +154,8 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
         timedOut ? "timed out" : status !== undefined ? `${status} ${message.slice(0, 160)}` : (error as Error)?.name ?? "unknown",
       );
 
-      if (classifyGeminiError({ status, message, timedOut }) === "stop") {
-        return {
-          ok: false,
-          reason: "failed",
-          message: "The AI couldn't estimate that. Please try again, or enter it manually.",
-        };
-      }
-      lastResult = BUSY;
+      if (classifyGeminiError({ status, message, timedOut }) === "stop") return options.stopped;
+      lastResult = options.busy;
     }
   }
 

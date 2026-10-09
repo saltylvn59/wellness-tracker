@@ -1,12 +1,13 @@
 # DEVELOP (wellness tracker)
 
-An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting workouts, and cardio (run, cycle, swim). The owner is a beginner learning web development with Claude Code, so **explain what each change does and why**, and build in small steps.
+An iPhone-first web app (installable PWA) for body weight, calorie/macro tracking, lifting workouts, and cardio (run, cycle, swim). The owner is a beginner learning web development with Claude Code, so **explain what each change does and why**, and build in small steps.
 
 ## Features
 - **Food log:** add food by photo or typed description; AI estimates calories and macros (always editable). Daily totals vs calorie goal.
 - **Water:** a slim row on each day of the Nutrition tab: tap +20 oz per bottle (undo available); three steps at 20, 40 and 60 oz, with the third as the daily goal (60 oz). Stored one row per bottle in `water_logs`; logic in `lib/water.ts`.
 - **Nutrition tab layout:** header like Fitness ("Nutrition" top-left; Today / Jump to today and the settings gear top-right), streak badge, week strip with week arrows, then a small "Weekday · date" line. The hero card focuses on calories and macros: a calorie ring (`CalorieRing`: green at/under goal, red over, "X left / X over") beside three macro rows (`MacroRow`: `eaten / goal g` with a thin bar). Optional protein/carb/fat goals are set in Settings.
-- **Settings gear:** `SettingsGear` sits top-right on both Nutrition and Fitness and opens the one shared Settings page.
+- **Settings gear:** `SettingsGear` sits top-right on Weight, Fitness and Nutrition and opens the one shared Settings page.
+- **Weight tab (`/weight`):** today's weigh-in on two inline scroll wheels (pounds 70-500, tenths) with a Save button (`WeighInCard`; one weigh-in per day in `weight_logs`). A progress card shows start / current / target with a progress bar, then lb per week, weeks to go and the goal date (`WeightProgress`), and a line chart of weigh-ins with the target line and a dashed projection (`WeightChart`). Start (optional, else the first weigh-in) and target are set in Settings (`profiles.start_weight_lb`, `profiles.target_weight_lb`). The weekly pace is suggested by Gemini (`suggestWeightPace` in `lib/ai/gemini.ts`, prompt and checks in `lib/ai/weightCoach.ts`), pulled into a safe range, and saved on the profile with the numbers it was made for (`weight_coach_key`); when a weigh-in or target changes, `PlanRefresher` asks again. If the AI is busy or over the daily limit, a built-in safe pace is used. All the math is in `lib/weightPlan.ts`; reads go through `lib/weightQueries.ts`.
 - **Name and splash:** the app is called DEVELOP (subtitle "wellness tracker"). A logo + name splash shows for about a second on launch, once per browser session (`SplashScreen`, plus a tiny script in `app/layout.tsx` that sets a sessionStorage flag). iOS caches the home-screen name and icon, so after a rename delete the icon and re-add it.
 - **Streaks 🔥:** Nutrition: consecutive days with at least one food entry. Fitness: consecutive days with logged lifting sets or cardio; the Sunday rest day neither breaks nor adds to it; today doesn't break it until the day is over. Shown as a badge with best streak and milestone celebrations; computed in the browser from the user's local date (`lib/streak.ts`).
 - **Fitness tab (one page, driven by the week calendar):** green ring and a check on every day with a logged workout or cardio. Weekly plan: Sunday = rest; Monday = Chest and Back; Wednesday = Legs; Friday = Delts and Arms; Tuesday, Thursday, Saturday = cardio.
@@ -14,9 +15,8 @@ An iPhone-first web app (installable PWA) for calorie/macro tracking, lifting wo
   - **Cardio days:** Log run / cycle / swim, each with optional distance (miles for run and cycle, yards for swim) and time; add and delete. Weekly distance goals (Settings): run default 5 mi, cycle default 10 mi, swim no default (yards); blank = no goal. A "This week" card on cardio days shows a progress bar for each, Monday to Sunday.
   - **Tanning (Tue and Thu):** a quiet ☀️ row under the cardio section that shows "Last time: N min" until you log today; tap to pick 5-15 minutes on a scroll wheel (one entry per day, stored in `tanning_logs`). Plain text, no card, and not part of streaks or rings (`lib/tanning.ts`).
   - **3-rep maxes (lifting days):** a card at the top (under the streak and week calendar) shows Incline Press, Deadlift and Squat: the heaviest weight logged for 3+ reps, matched by exercise name (`lib/workouts/maxes.ts`). Squat has to be added to the Wednesday plan.
-  - **Weight (cardio days):** a Weight card at the top of the page shows the latest weigh-in, the optional target (Settings) and "X lb to go". Log weight opens two wheels (pounds 70-500, tenths); one weigh-in per day in `weight_logs`; target in `profiles.target_weight_lb` (`lib/weight.ts`).
 - **App icon:** a flat Apple-green upward line graph of connected dots (haloed peak dot) on pure black, drawn in code (`lib/appIcon.tsx`). iPhones allow only one home-screen icon for a web app (no light/dark switching), so this dark icon is used for the home screen and all browser tabs.
-- **Tabs:** two bottom tabs, Nutrition (`/food`) and Fitness (`/workouts`).
+- **Tabs:** three bottom tabs, left to right: Weight (`/weight`), Fitness (`/workouts`), Nutrition (`/food`). Opening the app at `/` still lands on Nutrition.
 
 ## Stack
 Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, storage), Google Gemini free tier for AI food estimates (server-side only, via `lib/ai/gemini.ts`, the one swappable provider file), deployed on Vercel.
@@ -24,7 +24,7 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 ## Conventions
 - Mobile-first: design for ~390px width, safe-area insets, 44px+ tap targets, 16px+ input font size (prevents iOS zoom).
 - The Anthropic API key and Supabase service key live only in `.env.local` (git-ignored). Never expose them to browser code.
-- Call the AI only from server routes (`app/api/estimate-food/route.ts`); validate the JSON reply before using it (`lib/ai/nutrition.ts`). `GEMINI_API_KEY` lives only in `.env.local` and Vercel (Sensitive).
+- Call the AI only from the server (`app/api/estimate-food/route.ts`, `app/(tabs)/weight/actions.ts`); validate the JSON reply before using it (`lib/ai/nutrition.ts`, `lib/ai/weightCoach.ts`). Both share one 40-a-day AI limit per user (`lib/ai/dailyLimit.ts`). `GEMINI_API_KEY` lives only in `.env.local` and Vercel (Sensitive).
 - Row-level security on every Supabase table; every table is scoped to the signed-in user.
 - Dates are stored as the user's local calendar date, not UTC timestamps, so daily totals and streaks don't break at midnight.
 - Keep pure logic (streaks, goal status) in `lib/` with unit tests.
@@ -52,4 +52,5 @@ Next.js (App Router) + TypeScript, Tailwind CSS, Supabase (Postgres, auth, stora
 8. Cardio ✅ (run/cycle/swim with optional distance and time, under the cardio days; weekly distance goals with progress bars)
 9. Nutrition redesign (calorie ring, shared settings gear) and DEVELOP rename with launch splash ✅
 10. Tanning log (Tue/Thu) and weight log + target weight on cardio days ✅
-11. Polish and real-iPhone testing (still to do: try photo logging, scroll wheels, and the checkboxes on a real iPhone)
+11. Weight tab ✅ (three tabs: Weight, Fitness, Nutrition; inline weigh-in wheels, start/target in Settings, AI-suggested weekly pace with weeks to go, goal date and chart; weigh-in removed from cardio days)
+12. Polish and real-iPhone testing (still to do: try photo logging, scroll wheels, and the checkboxes on a real iPhone)

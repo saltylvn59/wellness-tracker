@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// Two tabs. Fitness covers lifting, cardio, sauna and stretch, all on the calendar.
+// Three tabs, left to right: Weight, Fitness (lifting, cardio, sauna and stretch, all on
+// the calendar), and Nutrition.
 const tabs = [
-  { href: "/food", matches: ["/food"], label: "Nutrition", icon: "🍎" },
+  { href: "/weight", matches: ["/weight"], label: "Weight", icon: "⚖️" },
   { href: "/workouts", matches: ["/workouts"], label: "Fitness", icon: "🏋️" },
+  { href: "/food", matches: ["/food"], label: "Nutrition", icon: "🍎" },
 ];
 
 // "use client" (above) means this runs in the browser, which we need here

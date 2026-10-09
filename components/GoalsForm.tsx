@@ -99,21 +99,37 @@ export default function GoalsForm({ goals }: { goals: Goals }) {
         <p className="mt-2 text-xs text-muted">Leave one blank if you don&apos;t want a goal for it.</p>
       </fieldset>
 
-      <div>
-        <label htmlFor="target_weight_lb" className={labelClass}>
-          Target weight <span className="font-normal">(optional, in lb)</span>
-        </label>
-        <input
-          id="target_weight_lb"
-          name="target_weight_lb"
-          type="text"
-          inputMode="decimal"
-          defaultValue={goals.target_weight_lb ?? ""}
-          placeholder="e.g. 175"
-          className={inputClass}
-        />
-        <p className="mt-2 text-xs text-muted">Shown with your current weight on cardio days.</p>
-      </div>
+      <fieldset>
+        <legend className="mb-1 text-sm font-medium text-muted">
+          Weight goal <span className="font-normal">(optional, in lb)</span>
+        </legend>
+        <div className="grid grid-cols-2 gap-3">
+          {(
+            [
+              ["start_weight_lb", "Starting weight", goals.start_weight_lb, "first weigh-in"],
+              ["target_weight_lb", "Target weight", goals.target_weight_lb, "e.g. 175"],
+            ] as const
+          ).map(([name, label, value, placeholder]) => (
+            <div key={name}>
+              <label htmlFor={name} className="mb-1 block text-xs text-muted">
+                {label}
+              </label>
+              <input
+                id={name}
+                name={name}
+                type="text"
+                inputMode="decimal"
+                defaultValue={value ?? ""}
+                placeholder={placeholder}
+                className={inputClass}
+              />
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Used on the Weight tab. Leave the starting weight blank to use your first weigh-in.
+        </p>
+      </fieldset>
 
       <button
         type="submit"

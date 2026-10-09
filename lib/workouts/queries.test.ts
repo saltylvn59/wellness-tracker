@@ -37,7 +37,7 @@ describe("loadTanning", () => {
 });
 
 describe("loadCardioDay", () => {
-  it("combines the week's totals, goals, today's logs, and your weight", async () => {
+  it("combines the week's totals, goals, and today's logs", async () => {
     const db = fakeSupabase({
       cardio_logs: [
         [
@@ -47,27 +47,22 @@ describe("loadCardioDay", () => {
         [{ id: "c1", kind: "run", distance: "3.1", distance_unit: "mi", duration_minutes: "28" }],
       ],
       profiles: [
-        { weekly_run_miles: "5", weekly_cycle_miles: "10", weekly_swim_yards: null, target_weight_lb: "175.5" },
+        { weekly_run_miles: "5", weekly_cycle_miles: "10", weekly_swim_yards: null },
       ],
-      weight_logs: [{ log_date: "2026-10-03", weight_lb: "185.4" }],
     });
     expect(await loadCardioDay(db, "user-1", "2026-10-06")).toEqual({
       logs: [{ id: "c1", kind: "run", distance: 3.1, unit: "mi", minutes: 28 }],
       weekTotals: { run: 3.1, cycle: 0, swim: 500 },
       weeklyGoals: { run: 5, cycle: 10, swim: null },
-      latestWeight: { date: "2026-10-03", pounds: 185.4 },
-      targetWeight: 175.5,
     });
   });
 
   it("handles a brand new account with nothing saved", async () => {
-    const db = fakeSupabase({ cardio_logs: [[], []], profiles: [null], weight_logs: [null] });
+    const db = fakeSupabase({ cardio_logs: [[], []], profiles: [null] });
     expect(await loadCardioDay(db, "user-1", "2026-10-06")).toEqual({
       logs: [],
       weekTotals: { run: 0, cycle: 0, swim: 0 },
       weeklyGoals: { run: null, cycle: null, swim: null },
-      latestWeight: null,
-      targetWeight: null,
     });
   });
 });
