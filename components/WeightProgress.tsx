@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import PlanRefresher from "@/components/PlanRefresher";
 import { formatDayNumber, formatShortMonth } from "@/lib/dates";
 import { formatWeightLb } from "@/lib/weight";
@@ -7,8 +8,9 @@ import type { PlanSummary } from "@/lib/weightPlan";
 const shortDate = (key: string) => `${formatShortMonth(key)} ${formatDayNumber(key)}`;
 const signed = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(1)}`;
 
-// Your goal at a glance: start -> current -> target with a progress bar, then the
-// pace you need each week, how many weeks that takes, and the date you'd get there.
+// Your goal at a glance, in one card: start -> current -> target with a progress bar,
+// the chart of your weigh-ins, then the pace you need each week, how many weeks that
+// takes, and the date you'd get there.
 export default function WeightProgress({
   start,
   current,
@@ -19,6 +21,7 @@ export default function WeightProgress({
   source,
   refreshing,
   today,
+  chart,
 }: {
   start: number;
   current: number;
@@ -29,6 +32,7 @@ export default function WeightProgress({
   source: "ai" | "auto" | null;
   refreshing: boolean; // the plan is out of date and is being updated now
   today: string;
+  chart: ReactNode; // the weigh-in chart (WeightChart), or nothing before your first weigh-in
 }) {
   const verb = plan.direction === "gain" || (plan.direction === "done" && target > start) ? "gained" : "lost";
   const percent = Math.round(plan.progress * 100);
@@ -72,6 +76,8 @@ export default function WeightProgress({
           <span className="font-semibold text-foreground">{percent}%</span>
         </p>
       </div>
+
+      {chart}
 
       {plan.direction === "done" ? (
         <p className="rounded-xl bg-background p-3 text-center text-base font-semibold">🎯 You&apos;re at your target!</p>
