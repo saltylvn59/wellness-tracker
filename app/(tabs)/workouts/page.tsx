@@ -18,6 +18,7 @@ import { loadDoneDates } from "@/lib/workouts/activity";
 import { latestSets } from "@/lib/workouts/history";
 import { defaultRepsFor, defaultWeightFor } from "@/lib/workouts/logging";
 import { REST_DAY_TITLE } from "@/lib/workouts/defaults";
+import { dayTitle } from "@/lib/workouts/weekSetup";
 import { loadCardioDay, loadLiftDay, loadTanning } from "@/lib/workouts/queries";
 import { loadWorkoutDays } from "@/lib/workouts/seed";
 
@@ -62,7 +63,7 @@ export default async function WorkoutsPage({
         <h2 className="text-lg font-semibold">
           {formatWeekday(date)}
           {today ? (
-            <span className="text-muted"> · {today.kind === "rest" ? REST_DAY_TITLE : today.title}</span>
+            <span className="text-muted"> · {dayTitle(today)}</span>
           ) : null}
         </h2>
         <p className="text-sm text-muted">{formatFullDate(date)}</p>
