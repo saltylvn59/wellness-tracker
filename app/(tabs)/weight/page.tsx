@@ -13,8 +13,8 @@ import { coachKey, goalNumbers, planSummary, recentTrend } from "@/lib/weightPla
 import { loadWeightData } from "@/lib/weightQueries";
 import { createClient } from "@/lib/supabase/server";
 
-// The Weight tab: today's weigh-in on scroll wheels, your progress toward your target,
-// the weekly pace the AI suggests (with weeks to go and a goal date), and a chart.
+// The Weight tab: one card at the top with your progress toward your target, a chart,
+// and the weekly pace the AI suggests (weeks to go, goal date); then today's weigh-in wheels.
 export default async function WeightPage({
   searchParams,
 }: {
@@ -38,6 +38,11 @@ export default async function WeightPage({
   const fresh = numbers !== null && data.plan.key === coachKey(numbers.start, numbers.current, numbers.target);
   const plan = numbers && planSummary({ ...numbers, pace: fresh ? data.plan.pace : null, today: date });
 
+  const chart =
+    data.logs.length > 0 ? (
+      <WeightChart logs={data.logs} target={data.targetSetting} goalDate={plan?.goalDate ?? null} />
+    ) : null;
+
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -59,9 +64,7 @@ export default async function WeightPage({
         </p>
       )}
 
-      {/* No key={date} here: on the Fitness page that left stale copies on screen. */}
-      <WeighInCard date={date} latest={latest} fallback={data.startSetting ?? data.targetSetting} />
-
+      {/* Your progress and the chart, together in one card at the top. */}
       {numbers && plan ? (
         <WeightProgress
           {...numbers}
@@ -71,30 +74,31 @@ export default async function WeightPage({
           source={fresh ? data.plan.source : null}
           refreshing={!fresh && plan.direction !== "done" && !data.databaseBehind}
           today={date}
+          chart={chart}
         />
       ) : (
-        <section className="space-y-2 rounded-2xl border border-dashed border-border p-5 text-center">
-          <p className="text-base font-semibold">
-            <span aria-hidden="true">🎯</span> Set your goal
-          </p>
-          <p className="text-sm text-muted">
-            {data.targetSetting === null
-              ? "Add a target weight in Settings to see your progress, weekly pace and weeks to go."
-              : "Log your first weigh-in above to see your progress."}
-          </p>
-          {data.targetSetting === null && (
-            <Link href="/settings" className="inline-flex min-h-11 items-center text-sm font-semibold text-accent active:opacity-70">
-              Open Settings
-            </Link>
-          )}
+        <section className="space-y-3 rounded-2xl bg-card p-4">
+          <div className="space-y-2 text-center">
+            <p className="text-base font-semibold">
+              <span aria-hidden="true">🎯</span> Set your goal
+            </p>
+            <p className="text-sm text-muted">
+              {data.targetSetting === null
+                ? "Add a target weight in Settings to see your progress, weekly pace and weeks to go."
+                : "Log your first weigh-in below to see your progress."}
+            </p>
+            {data.targetSetting === null && (
+              <Link href="/settings" className="inline-flex min-h-11 items-center text-sm font-semibold text-accent active:opacity-70">
+                Open Settings
+              </Link>
+            )}
+          </div>
+          {chart}
         </section>
       )}
 
-      {data.logs.length > 0 && (
-        <section className="rounded-2xl bg-card p-4">
-          <WeightChart logs={data.logs} target={data.targetSetting} goalDate={plan?.goalDate ?? null} />
-        </section>
-      )}
+      {/* No key={date} here: on the Fitness page that left stale copies on screen. */}
+      <WeighInCard date={date} latest={latest} fallback={data.startSetting ?? data.targetSetting} />
     </div>
   );
 }
