@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "icons": "sh scripts/make-icons.sh"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

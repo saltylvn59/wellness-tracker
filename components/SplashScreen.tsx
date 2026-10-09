@@ -7,7 +7,7 @@ export default function SplashScreen() {
     <div className="splash" aria-hidden="true">
       {/* A plain <img> is right here: it's the generated app icon, shown at one fixed size. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/icon" alt="" width={104} height={104} className="splash-logo" />
+      <img src="/icon-512.png" alt="" width={104} height={104} className="splash-logo" />
       <p className="splash-name">DEVELOP</p>
       <p className="splash-sub">wellness tracker</p>
     </div>

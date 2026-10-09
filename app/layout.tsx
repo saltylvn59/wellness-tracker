@@ -13,6 +13,15 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "DEVELOP",
   description: "DEVELOP: a wellness tracker for calories, macros, workouts, and cardio.",
+  // The app icon as plain PNG files in public/ (made by `npm run icons` from lib/appIcon.tsx).
+  // iPhones use apple-touch-icon.png for the home screen; browsers use the others for tabs.
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: {
     capable: true, // open full-screen (no Safari toolbars) from the home screen
     title: "DEVELOP", // the label under the home-screen icon
