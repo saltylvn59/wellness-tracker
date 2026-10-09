@@ -38,7 +38,7 @@ export default function WeightProgress({
   const percent = Math.round(plan.progress * 100);
 
   return (
-    <section aria-label="Goal progress" className="space-y-4 rounded-2xl bg-card p-4">
+    <section aria-label="Goal progress" className="space-y-3 rounded-2xl bg-card p-4">
       <div className="grid grid-cols-3 text-center">
         {(
           [
@@ -90,7 +90,7 @@ export default function WeightProgress({
               ["goal date", plan.goalDate === null ? "—" : shortDate(plan.goalDate)],
             ] as const
           ).map(([label, value]) => (
-            <div key={label} className="rounded-xl bg-background px-2 py-2">
+            <div key={label} className="rounded-xl bg-background px-2 py-1.5">
               <p className="text-lg font-bold tabular-nums">{value}</p>
               <p className="text-xs text-muted">{label}</p>
             </div>
