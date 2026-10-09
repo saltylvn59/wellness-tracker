@@ -40,7 +40,6 @@ export default async function WorkoutsPage({
     <div className="space-y-6">
       <FitnessHeader date={date} days={days} doneDates={doneDates} />
 
-      {lift && <ThreeRepMaxes maxes={lift.threeRepMaxes} />}
 
       <section className="space-y-1">
         <h2 className="text-lg font-semibold">
@@ -134,6 +133,9 @@ export default async function WorkoutsPage({
           <ExtraCheck kind="stretch" date={date} dayId={today.id} done={lift.stretchDone} />
         </section>
       )}
+
+      {/* The #1000club card sits at the bottom of lifting days, after the workout. */}
+      {lift && <ThreeRepMaxes maxes={lift.threeRepMaxes} />}
     </div>
   );
 }
