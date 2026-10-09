@@ -9,7 +9,7 @@
   /* Apple's system colors: green (Phone/Messages) for accents and "under goal",
      red for "over goal". */
   --accent: #34c759;
-  --on-accent: #ffffff;
+  --on-accent: #000000; /* text on the bright green is always black: white is hard to read */
   --danger: #ff3b30;
 }
 

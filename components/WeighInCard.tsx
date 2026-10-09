@@ -15,9 +15,9 @@ import {
 } from "@/lib/weight";
 import type { WeighIn } from "@/lib/weightPlan";
 
-// The top of the Weight tab: two scroll wheels (pounds and tenths) right on the page.
-// Swipe them up or down to your weight, then tap Save. Saving again the same day
-// just changes the number.
+// Today's weigh-in on the Weight tab: a "Weigh in" button across the top, two compact
+// scroll wheels (pounds and tenths) below, and a small status line. Swipe the wheels to your weight, then tap Save. Saving again
+// the same day just changes the number.
 export default function WeighInCard({
   date,
   latest,
@@ -50,49 +50,56 @@ export default function WeighInCard({
   }
 
   return (
-    <section aria-label="Weigh-in" className="space-y-3 rounded-2xl bg-card p-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-base font-semibold">
-          <span aria-hidden="true">⚖️</span> Weigh-in
-        </h2>
-        <p className="text-xs text-muted">
+    <section aria-label="Weigh-in" className="space-y-2 rounded-2xl bg-card px-4 py-3">
+      {/* The button across the top (it names the card, so there's no separate title). */}
+      <button
+        type="button"
+        onClick={() => run(() => saveWeight({ date, weight: picked }), "Saved.")}
+        disabled={pending || unchanged}
+        className="min-h-11 w-full rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-50"
+      >
+        {pending ? "Saving…" : unchanged ? "✓ Weighed in" : "Weigh in"}
+      </button>
+
+      {/* Pounds and tenths wheels, 3 rows each. */}
+      <div className="flex gap-2">
+        <WheelPicker label="Pounds" options={WHOLE_POUND_OPTIONS} value={whole} onChange={setWhole} rows={3} showLabel={false} />
+        <WheelPicker
+          label="Tenths"
+          options={TENTH_OPTIONS}
+          value={tenth}
+          onChange={setTenth}
+          format={(n) => `.${n}`}
+          rows={3}
+          showLabel={false}
+        />
+      </div>
+
+      {/* A small status line: today's weigh-in (with Remove), or your last one. */}
+      <p className="flex items-center justify-center gap-2 text-xs text-muted">
+        <span className="truncate">
           {saved !== null
             ? `Logged: ${formatWeightLb(saved)} lb`
             : latest
               ? `Last: ${formatWeightLb(latest.pounds)} lb on ${formatShortMonth(latest.date)} ${formatDayNumber(latest.date)}`
               : "No weigh-ins yet"}
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <WheelPicker label="Pounds" options={WHOLE_POUND_OPTIONS} value={whole} onChange={setWhole} />
-        <WheelPicker label="Tenths" options={TENTH_OPTIONS} value={tenth} onChange={setTenth} format={(n) => `.${n}`} />
-      </div>
-
-      <button
-        type="button"
-        onClick={() => run(() => saveWeight({ date, weight: picked }), "Saved.")}
-        disabled={pending || unchanged}
-        className="min-h-14 w-full rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-50"
-      >
-        {pending ? "Saving…" : unchanged ? `✓ ${formatWeightLb(picked)} lb saved` : `Save ${formatWeightLb(picked)} lb`}
-      </button>
+        </span>
+        {saved !== null && (
+          <button
+            type="button"
+            onClick={() => run(() => deleteWeight(date), "Removed.")}
+            disabled={pending}
+            className="min-h-8 shrink-0 font-medium text-danger active:opacity-70 disabled:opacity-60"
+          >
+            Remove
+          </button>
+        )}
+      </p>
 
       {message && (
-        <p role={message.ok ? "status" : "alert"} className={`text-sm ${message.ok ? "text-accent" : "text-danger"}`}>
+        <p role={message.ok ? "status" : "alert"} className={`text-center text-xs ${message.ok ? "text-accent" : "text-danger"}`}>
           {message.text}
         </p>
-      )}
-
-      {saved !== null && (
-        <button
-          type="button"
-          onClick={() => run(() => deleteWeight(date), "Removed.")}
-          disabled={pending}
-          className="min-h-11 w-full rounded-xl text-sm font-medium text-danger active:opacity-70 disabled:opacity-60"
-        >
-          Remove this weigh-in
-        </button>
       )}
     </section>
   );
