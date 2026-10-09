@@ -4,8 +4,9 @@ import type { GoalStatus } from "@/lib/goalStatus";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
-// Calories for the day: the ring (green at or under your goal, red over), and next to
-// it how much is left, or how far over you are. (Macros have their own card up top.)
+// Calories for the day: the ring with the one main number inside ("1,450 / 2,000 kcal";
+// green at or under your goal, red over), and beside it a plain line saying how much is
+// left, or how far over you are. (Macros have their own card up top.)
 export default function CaloriesCard({
   calories,
   goal,
@@ -21,15 +22,11 @@ export default function CaloriesCard({
       <div className="min-w-0">
         {goal ? (
           calories > goal ? (
-            <>
-              <p className="text-3xl font-bold tabular-nums text-danger">{fmt(calories - goal)}</p>
-              <p className="text-sm text-muted">kcal over your {fmt(goal)} goal</p>
-            </>
+            <p className="text-base font-semibold tabular-nums text-danger">{fmt(calories - goal)} kcal over</p>
           ) : (
-            <>
-              <p className="text-3xl font-bold tabular-nums">{fmt(goal - calories)}</p>
-              <p className="text-sm text-muted">kcal left of {fmt(goal)}</p>
-            </>
+            <p className="text-base font-medium tabular-nums">
+              {fmt(goal - calories)} <span className="text-muted">kcal left</span>
+            </p>
           )
         ) : (
           <Link href="/settings" className="text-sm font-medium text-accent underline">
