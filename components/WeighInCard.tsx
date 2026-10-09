@@ -83,7 +83,7 @@ export default function WeighInCard({
           disabled={pending || unchanged}
           className="min-h-11 shrink-0 rounded-xl bg-accent px-5 text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-50"
         >
-          {pending ? "Saving…" : unchanged ? "✓ Saved" : "Save"}
+          {pending ? "Saving…" : unchanged ? "✓ Weighed in" : "Weigh in"}
         </button>
       </div>
 
