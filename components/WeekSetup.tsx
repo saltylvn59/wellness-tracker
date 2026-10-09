@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { TOP_CARD } from "@/components/cardStyles";
 import { saveWeekKinds } from "@/app/(tabs)/workouts/week-actions";
 import type { DayKind } from "@/lib/workouts/defaults";
 import { PLANNABLE_WEEKDAYS, toggleDay } from "@/lib/workouts/weekSetup";
@@ -52,7 +53,7 @@ export default function WeekSetup({ days }: { days: { weekday: number; kind: Day
   }
 
   return (
-    <section aria-label="Your week" className="space-y-1 rounded-2xl bg-card px-3 py-2">
+    <section aria-label="Your week" className={`${TOP_CARD} space-y-1`}>
       {ROWS.map((row) => (
         // One line per row: the label, then the six days left to right.
         <div key={row.kind} className="flex items-center gap-2">

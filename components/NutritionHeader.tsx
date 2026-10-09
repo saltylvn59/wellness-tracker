@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import SettingsGear from "@/components/SettingsGear";
 import StreakBadge from "@/components/StreakBadge";
 import TodayPill from "@/components/TodayPill";
@@ -9,18 +10,21 @@ const arrowClass =
   "flex h-11 w-11 items-center justify-center rounded-full text-2xl text-muted active:bg-card";
 
 // The top of the Nutrition tab, laid out like the Fitness tab: title on the left,
-// "Today / Jump to today" and settings on the right, your streak, the week strip
-// (green or red ring per day, against your calorie goal), and a small date line.
+// "Today / Jump to today" and settings on the right, your streak, the macros card (in the
+// same spot and size as Fitness's "Your week" card), the week strip (green or red ring
+// per day, against your calorie goal), and a small date line.
 export default function NutritionHeader({
   date,
   goal,
   week,
   foodDates,
+  macros,
 }: {
   date: string;
   goal: number | null;
   week: WeekDay[];
   foodDates: string[]; // days you logged food, for the streak
+  macros: ReactNode; // the MacrosCard for this day
 }) {
   return (
     <header className="space-y-4">
@@ -38,6 +42,8 @@ export default function NutritionHeader({
         label="Food logging streak"
         startHint="Log a meal or snack today to start one."
       />
+
+      {macros}
 
       <div className="flex items-center gap-1">
         <Link href={`/food?date=${addDays(date, -7)}`} aria-label="Previous week" className={arrowClass}>
