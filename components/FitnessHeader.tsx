@@ -2,6 +2,7 @@ import Link from "next/link";
 import SettingsGear from "@/components/SettingsGear";
 import StreakBadge from "@/components/StreakBadge";
 import TodayPill from "@/components/TodayPill";
+import WeekSetup from "@/components/WeekSetup";
 import WorkoutWeekStrip from "@/components/WorkoutWeekStrip";
 import { addDays, isoWeekday, weekDays } from "@/lib/dates";
 import type { WorkoutDay } from "@/lib/workouts/plan";
@@ -9,8 +10,9 @@ import type { WorkoutDay } from "@/lib/workouts/plan";
 const arrowClass =
   "flex h-11 w-11 items-center justify-center rounded-full text-2xl text-muted active:bg-card";
 
-// The top of the Fitness page: title, your streak, and the week strip with a green
-// ring on every day you logged a workout or cardio.
+// The top of the Fitness page: title, "Your week" (which days are lifting, cardio, or
+// rest, editable), your streak, and the week strip with a green ring on every day you
+// logged a workout or cardio.
 export default function FitnessHeader({
   date,
   days,
@@ -34,6 +36,8 @@ export default function FitnessHeader({
           <SettingsGear />
         </div>
       </div>
+
+      <WeekSetup days={days} />
 
       <StreakBadge doneDates={doneDates} restWeekdays={restWeekdays} />
 

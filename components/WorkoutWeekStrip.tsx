@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDayNumber, formatFullDate, formatWeekdayShort } from "@/lib/dates";
 import type { DayKind } from "@/lib/workouts/defaults";
+import { KIND_ICON, KIND_NAME } from "@/lib/workouts/weekSetup";
 
 export type WorkoutStripDay = {
   dateKey: string;
@@ -8,8 +9,6 @@ export type WorkoutStripDay = {
   done: boolean; // you logged a workout or cardio that day
 };
 
-const KIND_ICON: Record<DayKind, string> = { lift: "🏋️", cardio: "🏃", rest: "🧘" };
-const KIND_NAME: Record<DayKind, string> = { lift: "Lifting", cardio: "Cardio", rest: "Rest" };
 
 // The week at a glance: day name, date number, and what kind of day it is.
 // A green ring around the number means you logged a workout or cardio that day.
