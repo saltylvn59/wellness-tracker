@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { formatDayNumber, formatFullDate, formatWeekdayShort } from "@/lib/dates";
+import { useSyncExternalStore } from "react";
+import { formatDayNumber, formatFullDate, formatWeekdayShort, getLocalDateKey } from "@/lib/dates";
 import type { DayKind } from "@/lib/workouts/defaults";
 import { KIND_ICON, KIND_NAME } from "@/lib/workouts/weekSetup";
 
@@ -9,10 +12,13 @@ export type WorkoutStripDay = {
   done: boolean; // you logged a workout or cardio that day
 };
 
+const noSubscribe = () => () => {};
 
 // The week at a glance: day name, date number, and what kind of day it is.
 // A green ring around the number means you logged a workout or cardio that day.
+// Days before today are dimmed (logged or not), so the days ahead stand out.
 // Tap a day to see its plan. The selected day is highlighted.
+// "use client" because "today" comes from the phone's clock; the server can't know it.
 export default function WorkoutWeekStrip({
   days,
   selected,
@@ -22,10 +28,14 @@ export default function WorkoutWeekStrip({
   selected: string;
   basePath: string; // the page the days link to, e.g. "/workouts"
 }) {
+  // null while the page is first drawn on the server; nothing is dimmed until the phone says what day it is.
+  const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
+
   return (
     <nav aria-label="Week" className="flex gap-1">
       {days.map((day) => {
         const isSelected = day.dateKey === selected;
+        const isPast = today !== null && day.dateKey < today; // "YYYY-MM-DD" keys sort like dates
         const label = [formatFullDate(day.dateKey), day.kind ? KIND_NAME[day.kind] : null, day.done ? "workout logged" : null]
           .filter(Boolean)
           .join(", ");
@@ -39,18 +49,20 @@ export default function WorkoutWeekStrip({
               isSelected ? "bg-card" : ""
             }`}
           >
-            <span className={`text-xs ${isSelected ? "font-semibold text-foreground" : "text-muted"}`}>
-              {formatWeekdayShort(day.dateKey)}
-            </span>
-            <span
-              className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-base ${
-                day.done ? "border-accent" : "border-transparent"
-              } ${isSelected ? "font-bold" : "font-medium"}`}
-            >
-              {formatDayNumber(day.dateKey)}
-            </span>
-            <span className="text-base leading-none" aria-hidden="true">
-              {day.done ? "✅" : day.kind ? KIND_ICON[day.kind] : ""}
+            <span className={`flex flex-col items-center gap-1 ${isPast ? "opacity-40" : ""}`}>
+              <span className={`text-xs ${isSelected ? "font-semibold text-foreground" : "text-muted"}`}>
+                {formatWeekdayShort(day.dateKey)}
+              </span>
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-base ${
+                  day.done ? "border-accent" : "border-transparent"
+                } ${isSelected ? "font-bold" : "font-medium"}`}
+              >
+                {formatDayNumber(day.dateKey)}
+              </span>
+              <span className="text-base leading-none" aria-hidden="true">
+                {day.kind ? KIND_ICON[day.kind] : ""}
+              </span>
             </span>
           </Link>
         );
