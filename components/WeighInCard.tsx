@@ -15,8 +15,8 @@ import {
 } from "@/lib/weight";
 import type { WeighIn } from "@/lib/weightPlan";
 
-// Today's weigh-in on the Weight tab: two compact scroll wheels (pounds and tenths) with
-// a Save button beside them. Swipe the wheels to your weight, then tap Save. Saving again
+// Today's weigh-in on the Weight tab: Save at the top right, and two compact scroll
+// wheels (pounds and tenths) below. Swipe the wheels to your weight, then tap Save. Saving again
 // the same day just changes the number.
 export default function WeighInCard({
   date,
@@ -51,31 +51,44 @@ export default function WeighInCard({
 
   return (
     <section aria-label="Weigh-in" className="space-y-2 rounded-2xl bg-card px-4 py-3">
+      {/* Top line: the title and status on the left, Save on the right. */}
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">
-          <span aria-hidden="true">⚖️</span> Weigh-in
-        </h2>
-        <p className="flex items-center gap-2 text-xs text-muted">
-          {saved !== null
-            ? `Logged: ${formatWeightLb(saved)} lb`
-            : latest
-              ? `Last: ${formatWeightLb(latest.pounds)} lb on ${formatShortMonth(latest.date)} ${formatDayNumber(latest.date)}`
-              : "No weigh-ins yet"}
-          {saved !== null && (
-            <button
-              type="button"
-              onClick={() => run(() => deleteWeight(date), "Removed.")}
-              disabled={pending}
-              className="min-h-8 font-medium text-danger active:opacity-70 disabled:opacity-60"
-            >
-              Remove
-            </button>
-          )}
-        </p>
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold">
+            <span aria-hidden="true">⚖️</span> Weigh-in
+          </h2>
+          <p className="flex items-center gap-2 text-xs text-muted">
+            <span className="truncate">
+              {saved !== null
+                ? `Logged: ${formatWeightLb(saved)} lb`
+                : latest
+                  ? `Last: ${formatWeightLb(latest.pounds)} lb on ${formatShortMonth(latest.date)} ${formatDayNumber(latest.date)}`
+                  : "No weigh-ins yet"}
+            </span>
+            {saved !== null && (
+              <button
+                type="button"
+                onClick={() => run(() => deleteWeight(date), "Removed.")}
+                disabled={pending}
+                className="min-h-8 shrink-0 font-medium text-danger active:opacity-70 disabled:opacity-60"
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => run(() => saveWeight({ date, weight: picked }), "Saved.")}
+          disabled={pending || unchanged}
+          className="min-h-11 shrink-0 rounded-xl bg-accent px-5 text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : unchanged ? "✓ Saved" : "Save"}
+        </button>
       </div>
 
-      {/* Pounds and tenths wheels (3 rows each), with the Save button beside them. */}
-      <div className="flex items-stretch gap-2">
+      {/* Pounds and tenths wheels, 3 rows each. */}
+      <div className="flex gap-2">
         <WheelPicker label="Pounds" options={WHOLE_POUND_OPTIONS} value={whole} onChange={setWhole} rows={3} showLabel={false} />
         <WheelPicker
           label="Tenths"
@@ -86,14 +99,6 @@ export default function WeighInCard({
           rows={3}
           showLabel={false}
         />
-        <button
-          type="button"
-          onClick={() => run(() => saveWeight({ date, weight: picked }), "Saved.")}
-          disabled={pending || unchanged}
-          className="w-24 shrink-0 rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-50"
-        >
-          {pending ? "Saving…" : unchanged ? "✓ Saved" : "Save"}
-        </button>
       </div>
 
       {message && (
