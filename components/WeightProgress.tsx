@@ -106,8 +106,6 @@ export default function WeightProgress({
             <p className="text-sm">
               <span aria-hidden="true">✨</span> {note}
             </p>
-          ) : source === "auto" ? (
-            <p className="text-xs text-muted">Using a built-in safe pace (the AI was busy). It retries after your next weigh-in.</p>
           ) : null}
           {trend !== null && (
             <p className="text-xs text-muted tabular-nums">

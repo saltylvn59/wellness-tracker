@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  autoPace,
   clampPace,
   coachKey,
   goalDirection,
@@ -8,6 +7,7 @@ import {
   planSummary,
   recentTrend,
   resolveStart,
+  WEEKLY_PACE_LB,
 } from "./weightPlan";
 
 describe("goalDirection", () => {
@@ -28,10 +28,10 @@ describe("paces", () => {
     expect(clampPace(1.23, "lose")).toBeCloseTo(1.25);
   });
 
-  it("falls back to 0.75% of body weight to lose, 0.5 lb to gain", () => {
-    expect(autoPace(200, "lose")).toBeCloseTo(1.5);
-    expect(autoPace(400, "lose")).toBe(2); // capped
-    expect(autoPace(150, "gain")).toBe(0.5);
+  it("uses your chosen 2 lb a week (gaining is capped at 1 lb a week)", () => {
+    expect(WEEKLY_PACE_LB).toBe(2);
+    expect(clampPace(WEEKLY_PACE_LB, "lose")).toBe(2);
+    expect(clampPace(WEEKLY_PACE_LB, "gain")).toBe(1);
   });
 });
 
@@ -116,7 +116,7 @@ describe("planSummary", () => {
 
 describe("coachKey", () => {
   it("changes when any of the three numbers changes", () => {
-    expect(coachKey(200, 190.5, 180)).toBe("200.0|190.5|180.0");
+    expect(coachKey(200, 190.5, 180)).toBe("200.0|190.5|180.0|2.0");
     expect(coachKey(200, 190.4, 180)).not.toBe(coachKey(200, 190.5, 180));
   });
 });

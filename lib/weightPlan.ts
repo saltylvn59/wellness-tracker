@@ -1,7 +1,10 @@
 // The Weight tab's goal math: where you started, where you are, where you're going,
-// how fast (lb per week), and how many weeks that takes. The AI only SUGGESTS the
-// weekly pace (see lib/ai/weightCoach.ts); every number on screen is worked out here,
-// so it's always exact. Pure functions, no database, so they're easy to test.
+// how fast (lb per week), and how many weeks that takes. Every number on screen is
+// worked out here, so it's always exact (the AI only writes the one-line coaching note:
+// lib/ai/weightCoach.ts). Pure functions, no database, so they're easy to test.
+
+/** Your chosen pace: 2 lb a week toward your target. */
+export const WEEKLY_PACE_LB = 2;
 
 import { addDays, daysBetween } from "./dates";
 
@@ -30,11 +33,6 @@ export function clampPace(pace: number, direction: Exclude<Direction, "done">): 
   const { min, max } = PACE_LIMITS[direction];
   const safe = Number.isFinite(pace) ? pace : min;
   return roundTo(Math.min(max, Math.max(min, safe)), 0.05);
-}
-
-/** The built-in pace, used when the AI is busy: 0.75% of body weight a week to lose, 0.5 lb to gain. */
-export function autoPace(current: number, direction: Exclude<Direction, "done">): number {
-  return clampPace(direction === "lose" ? current * 0.0075 : 0.5, direction);
 }
 
 /** Your starting weight: the one in Settings, else your first weigh-in, else none. */
@@ -104,9 +102,9 @@ export function planSummary(input: {
   return { direction, totalLb, doneLb, remainingLb, progress, pace, weeks, goalDate };
 }
 
-/** The numbers a saved pace was worked out for. When this changes, ask the AI again. */
-export function coachKey(start: number, current: number, target: number): string {
-  return [start, current, target].map((n) => n.toFixed(1)).join("|");
+/** The numbers a saved coaching note was written for. When any changes, ask the AI again. */
+export function coachKey(start: number, current: number, target: number, pace: number = WEEKLY_PACE_LB): string {
+  return [start, current, target, pace].map((n) => n.toFixed(1)).join("|");
 }
 
 /**
