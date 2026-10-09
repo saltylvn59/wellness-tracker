@@ -69,3 +69,10 @@ export const formatShortMonth = (key: string) => format(key, { month: "short" })
 export const formatDayNumber = (key: string) => format(key, { day: "numeric" });
 export const formatFullDate = (key: string) =>
   format(key, { month: "short", day: "numeric", year: "numeric" });
+
+/** Whole days from `from` to `to` (negative if `to` is earlier). */
+export function daysBetween(from: string, to: string): number {
+  const [y1, m1, d1] = parts(from);
+  const [y2, m2, d2] = parts(to);
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+}

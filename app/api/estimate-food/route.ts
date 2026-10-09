@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
+import { AI_DAILY_LIMIT, takeAiRequest } from "@/lib/ai/dailyLimit";
 import { estimateNutrition } from "@/lib/ai/gemini";
 import type { AiEstimate } from "@/lib/ai/nutrition";
 import { createClient } from "@/lib/supabase/server";
 
 // The AI can take several seconds; allow up to 30.
 export const maxDuration = 30;
-
-// Each person can make this many AI requests per rolling 24 hours. The free AI
-// quota is shared by everyone who can sign in, so one person can't use it all.
-const DAILY_LIMIT = 40;
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const MAX_IMAGE_BYTES = 4_000_000; // Vercel rejects request bodies over ~4.5 MB
@@ -53,20 +50,13 @@ export async function POST(request: Request) {
     return reply({ ok: false, message: "Add a photo or a description first." }, 400);
   }
 
-  // 3. Daily limit. Count first, then log this request (even if the AI then fails,
-  //    so failed attempts can't be used to hammer the service).
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count } = await supabase
-    .from("ai_requests")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", since);
-  if ((count ?? 0) >= DAILY_LIMIT) {
+  // 3. Daily limit (shared with weight-plan updates; see lib/ai/dailyLimit.ts).
+  if (!(await takeAiRequest(supabase, userId))) {
     return reply(
-      { ok: false, message: `You've reached today's limit of ${DAILY_LIMIT} AI estimates. Enter foods manually, or try again tomorrow.` },
+      { ok: false, message: `You've reached today's limit of ${AI_DAILY_LIMIT} AI estimates. Enter foods manually, or try again tomorrow.` },
       429,
     );
   }
-  await supabase.from("ai_requests").insert({ user_id: userId });
 
   // 4. Ask the AI, and pass along only the checked result.
   const result = await estimateNutrition({ description: description || undefined, image });
