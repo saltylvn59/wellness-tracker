@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayTitle, describeWeek, parseWeekKinds, titleAfterChange } from "./weekSetup";
+import { dayTitle, parseWeekKinds, titleAfterChange, toggleDay } from "./weekSetup";
 
 describe("dayTitle", () => {
   it("names cardio and rest days by their kind", () => {
@@ -23,28 +23,33 @@ describe("titleAfterChange", () => {
 });
 
 describe("parseWeekKinds", () => {
-  const good = { 1: "lift", 2: "cardio", 3: "lift", 4: "cardio", 5: "lift", 6: "cardio", 7: "rest" };
+  const good = { 1: "lift", 2: "cardio", 3: "lift", 4: "cardio", 5: "lift", 6: "cardio" };
 
-  it("reads all seven days", () => {
+  it("reads Monday to Saturday and always makes Sunday a rest day", () => {
     const week = parseWeekKinds(good);
     expect(week?.get(1)).toBe("lift");
+    expect(week?.get(6)).toBe("cardio");
     expect(week?.get(7)).toBe("rest");
-    expect(week?.size).toBe(7);
+    expect(parseWeekKinds({ ...good, 7: "lift" })?.get(7)).toBe("rest");
   });
 
   it("rejects missing days or unknown kinds", () => {
-    expect(parseWeekKinds({ ...good, 7: undefined })).toBeNull();
+    expect(parseWeekKinds({ ...good, 6: undefined })).toBeNull();
     expect(parseWeekKinds({ ...good, 3: "yoga" })).toBeNull();
     expect(parseWeekKinds(null)).toBeNull();
     expect(parseWeekKinds(["lift"])).toBeNull();
   });
 });
 
-describe("describeWeek", () => {
-  it("counts each kind of day", () => {
-    expect(describeWeek(["lift", "cardio", "lift", "cardio", "lift", "cardio", "rest"])).toBe(
-      "3 lifting · 3 cardio · 1 rest",
-    );
-    expect(describeWeek(["cardio", "cardio", "cardio", "cardio", "cardio", "cardio", "cardio"])).toBe("7 cardio");
+describe("toggleDay", () => {
+  const week = ["lift", "cardio", "rest"] as const;
+
+  it("turns a day on, moving it out of the other row", () => {
+    expect(toggleDay([...week], 2, "lift")).toEqual(["lift", "cardio", "lift"]);
+    expect(toggleDay([...week], 0, "cardio")).toEqual(["cardio", "cardio", "rest"]);
+  });
+
+  it("turns a day that's already on off (rest)", () => {
+    expect(toggleDay([...week], 0, "lift")).toEqual(["rest", "cardio", "rest"]);
   });
 });

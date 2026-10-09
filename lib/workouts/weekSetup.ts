@@ -1,4 +1,5 @@
-// Choosing which weekdays are lifting, cardio, or rest days ("Your week" on the Fitness tab).
+// Choosing which weekdays are lifting or cardio days ("Your week" on the Fitness tab).
+// Monday to Saturday can be lift, cardio, or neither (rest); Sunday is always a recovery day.
 // Each weekday row in workout_days keeps its exercises even when you switch it to cardio
 // or rest, so switching it back to lifting brings them back.
 
@@ -28,22 +29,26 @@ export function titleAfterChange(kind: DayKind, currentTitle: string): string {
   return currentTitle;
 }
 
-/** Checks the week sent by the browser: every weekday 1-7 with lift, cardio, or rest. */
+/** Sunday (weekday 7) is always a recovery day; it can't be planned. */
+export const PLANNABLE_WEEKDAYS = [1, 2, 3, 4, 5, 6];
+
+/**
+ * Checks the week sent by the browser: Monday to Saturday (1-6), each lift, cardio, or
+ * rest. Sunday is added as rest whatever the browser sent.
+ */
 export function parseWeekKinds(raw: unknown): Map<number, DayKind> | null {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
   const week = new Map<number, DayKind>();
-  for (let weekday = 1; weekday <= 7; weekday++) {
+  for (const weekday of PLANNABLE_WEEKDAYS) {
     const kind = (raw as Record<string, unknown>)[String(weekday)];
     if (typeof kind !== "string" || !DAY_KINDS.includes(kind as DayKind)) return null;
     week.set(weekday, kind as DayKind);
   }
+  week.set(7, "rest");
   return week;
 }
 
-/** "3 lifting · 3 cardio · 1 rest" (kinds with no days are left out). */
-export function describeWeek(kinds: DayKind[]): string {
-  return DAY_KINDS.map((kind) => [kind, kinds.filter((k) => k === kind).length] as const)
-    .filter(([, count]) => count > 0)
-    .map(([kind, count]) => `${count} ${kind === "lift" ? "lifting" : kind}`)
-    .join(" · ");
+/** Tapping a day in the Lift or Cardio row: turns it on (and off in the other row), or off (rest). */
+export function toggleDay(kinds: DayKind[], index: number, row: "lift" | "cardio"): DayKind[] {
+  return kinds.map((kind, i) => (i !== index ? kind : kind === row ? "rest" : row));
 }
