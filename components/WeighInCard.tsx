@@ -51,13 +51,12 @@ export default function WeighInCard({
 
   return (
     <section aria-label="Weigh-in" className="space-y-2 rounded-2xl bg-card px-4 py-3">
-      {/* The button across the top (it names the card, so there's no separate title).
-          Black text: white is hard to read on the bright green. */}
+      {/* The button across the top (it names the card, so there's no separate title). */}
       <button
         type="button"
         onClick={() => run(() => saveWeight({ date, weight: picked }), "Saved.")}
         disabled={pending || unchanged}
-        className="min-h-11 w-full rounded-xl bg-accent text-base font-semibold text-black active:opacity-80 disabled:opacity-50"
+        className="min-h-11 w-full rounded-xl bg-accent text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-50"
       >
         {pending ? "Saving…" : unchanged ? "✓ Weighed in" : "Weigh in"}
       </button>
