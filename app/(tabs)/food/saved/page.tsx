@@ -4,6 +4,7 @@ import GoToToday from "@/components/GoToToday";
 import { formatFullDate, isValidDateKey } from "@/lib/dates";
 import type { SavedFood } from "@/lib/food";
 import { createClient } from "@/lib/supabase/server";
+import { currentUserId } from "@/lib/actionResult";
 
 export default async function SavedFoodsPage({
   searchParams,
@@ -14,8 +15,7 @@ export default async function SavedFoodsPage({
   if (!date || !isValidDateKey(date)) return <GoToToday to="/food/saved" />;
 
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims.sub) redirect("/login");
+  if (!(await currentUserId(supabase))) redirect("/login");
 
   const { data } = await supabase
     .from("saved_foods")

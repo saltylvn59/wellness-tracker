@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isValidDateKey } from "@/lib/dates";
 import { parseFoodForm, parseSource } from "@/lib/food";
 import { upsertSavedFood } from "@/lib/savedFoods";
+import { currentUserId } from "@/lib/actionResult";
 
 export type FormState = { message: string } | null;
 
@@ -18,8 +19,7 @@ export async function saveFoodEntry(
   if (!parsed.ok) return { message: parsed.message };
 
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims.sub;
+  const userId = await currentUserId(supabase);
   if (!userId) redirect("/login");
 
   const id = formData.get("id");

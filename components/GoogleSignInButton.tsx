@@ -1,31 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useFormStatus } from "react-dom";
+import { signInWithGoogle } from "@/app/login/actions";
 
-export default function GoogleSignInButton() {
-  const [loading, setLoading] = useState(false);
-
-  async function signIn() {
-    setLoading(true);
-    const supabase = createClient();
-    // Sends you to Google. After you approve, Google sends you back to our
-    // /auth/callback page, which finishes the login.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setLoading(false);
-  }
-
+// The button inside the form: shows "Opening Google…" while the server gets the sign-in link.
+function SubmitButton() {
+  const { pending } = useFormStatus();
   return (
     <button
-      type="button"
-      onClick={signIn}
-      disabled={loading}
+      type="submit"
+      disabled={pending}
       className="flex min-h-12 w-full items-center justify-center rounded-xl bg-accent px-4 text-base font-semibold text-on-accent active:opacity-80 disabled:opacity-60"
     >
-      {loading ? "Opening Google…" : "Continue with Google"}
+      {pending ? "Opening Google…" : "Continue with Google"}
     </button>
+  );
+}
+
+// Sends you to Google to sign in (the server starts it: see app/login/actions.ts).
+export default function GoogleSignInButton() {
+  return (
+    <form action={signInWithGoogle}>
+      <SubmitButton />
+    </form>
   );
 }

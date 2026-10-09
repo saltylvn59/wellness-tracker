@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadCardioDay, loadLiftDay, loadTanning } from "./queries";
+import { loadCardioDay, loadFitnessPage, loadLiftDay, loadPlanExercises, loadTanning } from "./queries";
 
 // A stand-in for the database: each from("table") call hands back the next prepared
 // answer for that table (in the order the page asks), and any query-builder call chains on.
@@ -68,9 +68,10 @@ describe("loadCardioDay", () => {
 });
 
 describe("loadLiftDay", () => {
-  it("gathers exercises, today's sets, ticks, bests, history, and 3-rep maxes", async () => {
+  const deadlift = { id: "e1", name: "Deadlift", target_sets: 3, rep_min: 3, rep_max: 5, superset_with_next: false };
+
+  it("gathers today's sets, ticks, bests, history, and 3-rep maxes", async () => {
     const db = fakeSupabase({
-      workout_exercises: [[{ id: "e1", name: "Deadlift", target_sets: 3, rep_min: 3, rep_max: 5, superset_with_next: false }]],
       workout_sessions: [
         {
           sauna_done: true,
@@ -80,15 +81,15 @@ describe("loadLiftDay", () => {
       ],
       // Calls in order: three 3-rep max lifts, then the one exercise's best, then history.
       workout_sets: [
-        { weight: "185" }, // incline press 3RM
+        { weight: "185" }, // bench 3RM
         { weight: "315" }, // deadlift 3RM
         null, // squat: nothing logged
         { weight: "335" }, // best weight for e1
         [{ exercise_id: "e1", set_number: 1, weight: "305", reps: 5, workout_sessions: { session_date: "2026-09-29" } }],
       ],
     });
-    const lift = await loadLiftDay(db, "2026-10-06", "day-1");
-    expect(lift.exercises).toHaveLength(1);
+    const lift = await loadLiftDay(db, "2026-10-06", [deadlift]);
+    expect(lift.exercises).toEqual([deadlift]);
     expect(lift.saunaDone).toBe(true);
     expect(lift.stretchDone).toBe(false);
     expect(lift.todaySets).toEqual([{ id: "s1", exercise_id: "e1", set_number: 1, weight: 315, reps: 3 }]);
@@ -100,13 +101,78 @@ describe("loadLiftDay", () => {
   });
 
   it("skips the per-exercise lookups when the day has no exercises", async () => {
-    const db = fakeSupabase({
-      workout_exercises: [[]],
-      workout_sessions: [null],
-      workout_sets: [null, null, null],
-    });
-    const lift = await loadLiftDay(db, "2026-10-06", "day-1");
+    const db = fakeSupabase({ workout_sessions: [null], workout_sets: [null, null, null] });
+    const lift = await loadLiftDay(db, "2026-10-06", []);
     expect(lift).toMatchObject({ exercises: [], todaySets: [], history: [], saunaDone: false, stretchDone: false });
     expect(lift.bestById.size).toBe(0);
+  });
+});
+
+describe("loadPlanExercises", () => {
+  it("returns just the exercise fields, without the joined weekday", async () => {
+    const db = fakeSupabase({
+      workout_exercises: [
+        [{ id: "e1", name: "Squat", target_sets: 3, rep_min: 5, rep_max: 8, superset_with_next: true, workout_days: { weekday: 3 } }],
+      ],
+    });
+    expect(await loadPlanExercises(db, 3)).toEqual([
+      { id: "e1", name: "Squat", target_sets: 3, rep_min: 5, rep_max: 8, superset_with_next: true },
+    ]);
+  });
+});
+
+describe("loadFitnessPage round trips", () => {
+  // A stand-in database where every query takes 50 ms, like a trip over the network.
+  // Queries that run at the same time overlap; ones that wait on each other add up.
+  const LATENCY = 50;
+  const days = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({
+    id: `d${weekday}`,
+    weekday,
+    kind: [1, 3, 5].includes(weekday) ? "lift" : weekday === 7 ? "rest" : "cardio",
+    title: "x",
+  }));
+  const slowDb = () =>
+    ({
+      from(table: string) {
+        let single = false;
+        const rows =
+          table === "workout_days"
+            ? days
+            : table === "workout_exercises"
+              ? [{ id: "e1", name: "Squat", target_sets: 3, rep_min: 5, rep_max: 8, superset_with_next: false }]
+              : [];
+        const chain: unknown = new Proxy(
+          {},
+          {
+            get: (_target, prop) => {
+              if (prop === "maybeSingle" || prop === "single") single = true;
+              if (prop !== "then") return () => chain;
+              const data = single ? (rows[0] ?? null) : rows;
+              return (resolve: (value: unknown) => unknown) =>
+                new Promise((r) => setTimeout(r, LATENCY)).then(() => resolve({ data, error: null }));
+            },
+          },
+        );
+        return chain;
+      },
+    }) as never;
+
+  async function trips(date: string) {
+    const start = performance.now();
+    const page = await loadFitnessPage(slowDb(), "u", date);
+    return { page, trips: Math.round((performance.now() - start) / LATENCY) };
+  }
+
+  it("loads a lifting day in 2 trips", async () => {
+    const { page, trips: count } = await trips("2026-10-05"); // Monday
+    expect(page.lift?.exercises).toHaveLength(1);
+    expect(count).toBe(2);
+  });
+
+  it("loads a cardio + tanning day in 2 trips", async () => {
+    const { page, trips: count } = await trips("2026-10-06"); // Tuesday
+    expect(page.cardio).not.toBeNull();
+    expect(page.tanning).not.toBeNull();
+    expect(count).toBe(2);
   });
 });

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { DATABASE_BEHIND_MESSAGE, isMissingSchemaError } from "@/lib/dbErrors";
 import { parseGoalsForm } from "@/lib/goals";
 import { createClient } from "@/lib/supabase/server";
+import { currentUserId } from "@/lib/actionResult";
 
 // "use server" = these functions run on the server when a form is submitted.
 // Never trust what the browser sends: we check everything again here.
@@ -16,8 +17,7 @@ export async function saveGoals(_previous: SaveResult, formData: FormData): Prom
   if (!parsed.ok) return { ok: false, message: parsed.message };
 
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims.sub;
+  const userId = await currentUserId(supabase);
   if (!userId) redirect("/login");
 
   // Row Level Security in the database also enforces "only your own row".

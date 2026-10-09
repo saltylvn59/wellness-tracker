@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { parsePlanJson } from "@/lib/workouts/plan";
+import { currentUserId } from "@/lib/actionResult";
 
 export type PlanFormState = { message: string } | null;
 
@@ -21,8 +22,7 @@ export async function saveDayPlan(
   if (!parsed.ok) return { message: parsed.message };
 
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
+  const userId = await currentUserId(supabase);
   if (!userId) redirect("/login");
 
   // Row Level Security hides other people's days, so this only finds yours.

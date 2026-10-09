@@ -3,6 +3,7 @@ import { AI_DAILY_LIMIT, takeAiRequest } from "@/lib/ai/dailyLimit";
 import { estimateNutrition } from "@/lib/ai/gemini";
 import type { AiEstimate } from "@/lib/ai/nutrition";
 import { createClient } from "@/lib/supabase/server";
+import { currentUserId } from "@/lib/actionResult";
 
 // The AI can take several seconds; allow up to 30.
 export const maxDuration = 30;
@@ -17,8 +18,7 @@ const reply = (body: ApiResult, status = 200) => NextResponse.json(body, { statu
 export async function POST(request: Request) {
   // 1. Only signed-in users. (The login system supplies who is asking.)
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims.sub;
+  const userId = await currentUserId(supabase);
   if (!userId) return reply({ ok: false, message: "Please sign in again." }, 401);
 
   // 2. Check what was sent. Never trust the browser.
