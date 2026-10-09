@@ -10,17 +10,14 @@ import ThreeRepMaxes from "@/components/ThreeRepMaxes";
 import TanningLog from "@/components/TanningLog";
 import WeeklyCardioGoals from "@/components/WeeklyCardioGoals";
 import { currentUserId } from "@/lib/actionResult";
-import { addDays, formatFullDate, formatWeekday, isoWeekday, isValidDateKey } from "@/lib/dates";
+import { formatFullDate, formatWeekday, isValidDateKey } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import { isTanningDay } from "@/lib/tanning";
 import { connectorAfter, formatRest, formatSetsReps } from "@/lib/workouts/plan";
-import { loadDoneDates } from "@/lib/workouts/activity";
 import { latestSets } from "@/lib/workouts/history";
 import { defaultRepsFor, defaultWeightFor } from "@/lib/workouts/logging";
 import { REST_DAY_TITLE } from "@/lib/workouts/defaults";
 import { dayTitle } from "@/lib/workouts/weekSetup";
-import { loadCardioDay, loadLiftDay, loadTanning } from "@/lib/workouts/queries";
-import { loadWorkoutDays } from "@/lib/workouts/seed";
+import { loadFitnessPage } from "@/lib/workouts/queries";
 
 export default async function WorkoutsPage({
   searchParams,
@@ -35,23 +32,9 @@ export default async function WorkoutsPage({
   const userId = await currentUserId(supabase);
   if (!userId) redirect("/login");
 
-  // Your weekly plan (copied in on your first visit), and every day you've logged a
-  // workout or cardio (for the streak and the green rings).
-  const [days, doneDates] = await Promise.all([
-    loadWorkoutDays(supabase, userId),
-    loadDoneDates(supabase, addDays(date, -400)),
-  ]);
-
-  const byWeekday = new Map(days.map((d) => [d.weekday, d]));
-  const today = byWeekday.get(isoWeekday(date));
-
-  // Then everything this kind of day needs, all fetched at the same time.
+  // Everything this page reads, in two rounds (see loadFitnessPage).
   // (Don't put key={date} on the cards below: switching days then left stale copies on screen.)
-  const [lift, cardio, tanning] = await Promise.all([
-    today?.kind === "lift" ? loadLiftDay(supabase, date, today.id) : null,
-    today?.kind === "cardio" ? loadCardioDay(supabase, userId, date) : null,
-    isTanningDay(isoWeekday(date)) ? loadTanning(supabase, date) : null, // Tuesday and Thursday
-  ]);
+  const { days, doneDates, today, lift, cardio, tanning } = await loadFitnessPage(supabase, userId, date);
 
   return (
     <div className="space-y-6">

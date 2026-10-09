@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 
 const ITEM_HEIGHT = 44; // px per row
 
@@ -13,6 +13,34 @@ type Props = {
   rows?: 3 | 5; // rows you can see (the middle one is the selected one); 3 is more compact
   showLabel?: boolean; // the small title above the wheel (screen readers always get it)
 };
+
+// One row of the wheel. memo() = React skips redrawing a row unless its own text or
+// "selected" state changed, so moving the wheel redraws 2 rows instead of all 431.
+const WheelRow = memo(function WheelRow({
+  index,
+  text,
+  selected,
+  onPick,
+}: {
+  index: number;
+  text: string;
+  selected: boolean;
+  onPick: (index: number) => void;
+}) {
+  return (
+    <div
+      role="option"
+      aria-selected={selected}
+      onClick={() => onPick(index)}
+      className={`flex snap-center snap-always items-center justify-center tabular-nums ${
+        selected ? "text-2xl font-bold" : "text-lg text-muted"
+      }`}
+      style={{ height: ITEM_HEIGHT }}
+    >
+      {text}
+    </div>
+  );
+});
 
 // An iPhone-style scroll wheel. It's an ordinary scrollable list that "snaps"
 // one row at a time (CSS scroll-snap); whichever row ends up in the middle band
@@ -55,10 +83,14 @@ export default function WheelPicker({ label, options, value, onChange, format = 
     if (picked !== value) onChange(picked);
   }
 
-  function goTo(index: number) {
-    const clamped = Math.min(options.length - 1, Math.max(0, index));
-    scroller.current?.scrollTo({ top: clamped * ITEM_HEIGHT, behavior: "smooth" });
-  }
+  // Stable between redraws (useCallback), so the memoized rows don't redraw just for this.
+  const goTo = useCallback(
+    (index: number) => {
+      const clamped = Math.min(options.length - 1, Math.max(0, index));
+      scroller.current?.scrollTo({ top: clamped * ITEM_HEIGHT, behavior: "smooth" });
+    },
+    [options.length],
+  );
 
   return (
     <div className="flex-1">
@@ -83,18 +115,7 @@ export default function WheelPicker({ label, options, value, onChange, format = 
           style={{ paddingTop: PAD, paddingBottom: PAD }}
         >
           {options.map((option, index) => (
-            <div
-              key={option}
-              role="option"
-              aria-selected={option === value}
-              onClick={() => goTo(index)}
-              className={`flex snap-center snap-always items-center justify-center tabular-nums ${
-                option === value ? "text-2xl font-bold" : "text-lg text-muted"
-              }`}
-              style={{ height: ITEM_HEIGHT }}
-            >
-              {format(option)}
-            </div>
+            <WheelRow key={option} index={index} text={format(option)} selected={option === value} onPick={goTo} />
           ))}
         </div>
 

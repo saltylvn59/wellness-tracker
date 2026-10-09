@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "DEVELOP: a wellness tracker for calories, macros, workouts, and cardio.",
     start_url: "/food",
     display: "standalone", // full-screen, like a native app
-    background_color: "#ffffff",
-    theme_color: "#34c759", // Apple system green
+    background_color: "#000000", // black behind the icon while the app opens, to match it
+    theme_color: "#000000", // black system bars, to match the icon
     icons: [{ src: "/icon", sizes: "512x512", type: "image/png" }],
   };
 }

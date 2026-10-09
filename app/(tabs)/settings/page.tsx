@@ -2,11 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import GoalsForm from "@/components/GoalsForm";
 import type { Goals } from "@/lib/goals";
 import { signOut } from "./actions";
+import { currentUserId } from "@/lib/actionResult";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
+  const userId = await currentUserId(supabase);
 
   const { data: profile } = await supabase
     .from("profiles")

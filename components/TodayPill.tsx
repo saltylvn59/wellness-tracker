@@ -17,7 +17,7 @@ export default function TodayPill({ dateKey, href = "/food" }: { dateKey: string
   }
   return (
     <Link
-      href={href}
+      href={`${href}?date=${today}`} // straight to today, without an extra load to find the date
       className="flex h-11 items-center text-sm font-medium text-accent active:opacity-70"
     >
       Jump to today

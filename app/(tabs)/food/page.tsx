@@ -11,6 +11,7 @@ import { MEAL_LABELS, MEAL_TYPES, sumEntries, type FoodEntry } from "@/lib/food"
 import { loadFoodLogDates } from "@/lib/foodStreak";
 import { getGoalStatus } from "@/lib/goalStatus";
 import { createClient } from "@/lib/supabase/server";
+import { currentUserId } from "@/lib/actionResult";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
@@ -24,8 +25,7 @@ export default async function FoodPage({
   if (!date || !isValidDateKey(date)) return <GoToToday />;
 
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
+  const userId = await currentUserId(supabase);
   if (!userId) redirect("/login");
 
   // Fetch your goal and the whole week's entries at the same time.
