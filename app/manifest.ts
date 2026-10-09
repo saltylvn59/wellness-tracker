@@ -11,6 +11,10 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone", // full-screen, like a native app
     background_color: "#000000", // black behind the icon while the app opens, to match it
     theme_color: "#000000", // black system bars, to match the icon
-    icons: [{ src: "/icon", sizes: "512x512", type: "image/png" }],
+    // Plain PNG files in public/ (made by `npm run icons` from lib/appIcon.tsx).
+    icons: [
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    ],
   };
 }

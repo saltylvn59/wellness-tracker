@@ -4,6 +4,10 @@ import { ImageResponse } from "next/og";
 // a bold green line graph trending upward on a near-black background, with a dot at each point (what progress looks
 // like). The last dot is bigger, with a halo, because that's where you are now.
 //
+// This file is the design. The icons the phone actually uses are plain PNG files in public/
+// (apple-touch-icon.png, icon-192.png, icon-512.png): after changing the design here, run
+// `npm run dev`, then `npm run icons` to redraw them.
+//
 // iPhones let a web app have only ONE home-screen icon (it can't switch between
 // light and dark), so this dark icon is used for the home screen and every
 // browser tab.
