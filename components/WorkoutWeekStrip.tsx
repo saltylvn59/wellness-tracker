@@ -1,18 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
-import { formatDayNumber, formatFullDate, formatWeekdayShort, getLocalDateKey } from "@/lib/dates";
+import { formatDayNumber, formatFullDate, formatWeekdayShort } from "@/lib/dates";
 import type { DayKind } from "@/lib/workouts/defaults";
 import { KIND_ICON, KIND_NAME } from "@/lib/workouts/weekSetup";
+import { useToday } from "@/components/useToday";
 
 export type WorkoutStripDay = {
   dateKey: string;
   kind: DayKind | null; // what the plan says for that weekday
   done: boolean; // you logged a workout or cardio that day
 };
-
-const noSubscribe = () => () => {};
 
 // The week at a glance: day name, date number, and what kind of day it is.
 // A green ring around the number means you logged a workout or cardio that day.
@@ -29,7 +27,7 @@ export default function WorkoutWeekStrip({
   basePath: string; // the page the days link to, e.g. "/workouts"
 }) {
   // null while the page is first drawn on the server; nothing is dimmed until the phone says what day it is.
-  const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
+  const today = useToday();
 
   return (
     <nav aria-label="Week" className="flex gap-1">

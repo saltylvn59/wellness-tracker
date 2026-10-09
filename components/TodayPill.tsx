@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
-import { getLocalDateKey } from "@/lib/dates";
-
-const noSubscribe = () => () => {};
+import { useToday } from "@/components/useToday";
 
 // Says "Today" on today's page, or offers a way back when you're on another day.
 // It needs the phone's clock, so it renders nothing on the server.
 export default function TodayPill({ dateKey, href = "/food" }: { dateKey: string; href?: string }) {
-  const today = useSyncExternalStore(noSubscribe, getLocalDateKey, () => null);
+  const today = useToday();
 
   if (!today) return <span className="block h-11" />; // keeps the layout steady
   if (today === dateKey) {
