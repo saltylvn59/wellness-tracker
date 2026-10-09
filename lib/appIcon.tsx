@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
-// The app icon, drawn in code (no image files): a green line graph trending
-// upward on a black background, with a dot at each point (what progress looks
+// The app icon, drawn in code (no image files), styled like iMessage's dark-mode icon:
+// a bold green line graph trending upward on a near-black background, with a dot at each point (what progress looks
 // like). The last dot is bigger, with a halo, because that's where you are now.
 //
 // iPhones let a web app have only ONE home-screen icon (it can't switch between
@@ -23,7 +23,11 @@ const POINTS: [number, number][] = [
 
 const LINE = POINTS.map(([x, y]) => `${x},${y}`).join(" ");
 
-const GREEN = "#30d158"; // Apple's green for dark backgrounds
+// The iMessage dark-mode look: a bold green glyph with a soft top-to-bottom gradient
+// (lighter green to deeper green) on a background that fades from very dark grey to black.
+const GREEN_TOP = "#5df27a";
+const GREEN_BOTTOM = "#1fbf3f";
+const BG_TOP = "#1c1c1e"; // iOS dark grey
 const BLACK = "#000000";
 
 function iconSvg(size: number) {
@@ -31,31 +35,43 @@ function iconSvg(size: number) {
 
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" fill={BLACK} />
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={BG_TOP} />
+          <stop offset="1" stopColor={BLACK} />
+        </linearGradient>
+        {/* userSpaceOnUse: one gradient across the whole icon, so the line and dots match */}
+        <linearGradient id="green" gradientUnits="userSpaceOnUse" x1="0" y1="96" x2="0" y2="416">
+          <stop offset="0" stopColor={GREEN_TOP} />
+          <stop offset="1" stopColor={GREEN_BOTTOM} />
+        </linearGradient>
+      </defs>
 
-      {/* the connecting line */}
+      <rect width="512" height="512" fill="url(#bg)" />
+
+      {/* the connecting line: thick and bold, like iMessage's bubble */}
       <polyline
         points={LINE}
         fill="none"
-        stroke={GREEN}
-        strokeWidth="26"
+        stroke="url(#green)"
+        strokeWidth="40"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
 
-      {/* a dot at every point; each has a black center so it reads as a node */}
+      {/* a dot at every point; each has a dark center so it reads as a node */}
       {POINTS.slice(0, -1).map(([x, y]) => (
         <g key={`${x}-${y}`}>
-          <circle cx={x} cy={y} r="27" fill={GREEN} />
-          <circle cx={x} cy={y} r="11" fill={BLACK} />
+          <circle cx={x} cy={y} r="34" fill="url(#green)" />
+          <circle cx={x} cy={y} r="13" fill={BLACK} />
         </g>
       ))}
 
       {/* the last dot is bigger, with a halo: where you are now */}
       <g>
-        <circle cx={last[0]} cy={last[1]} r="52" fill={GREEN} fillOpacity={0.22} />
-        <circle cx={last[0]} cy={last[1]} r="36" fill={GREEN} />
-        <circle cx={last[0]} cy={last[1]} r="15" fill={BLACK} />
+        <circle cx={last[0]} cy={last[1]} r="62" fill={GREEN_TOP} fillOpacity={0.22} />
+        <circle cx={last[0]} cy={last[1]} r="44" fill="url(#green)" />
+        <circle cx={last[0]} cy={last[1]} r="17" fill={BLACK} />
       </g>
     </svg>
   );
