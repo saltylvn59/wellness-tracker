@@ -1,43 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { coachPrompt, parseCoachAdvice } from "./weightCoach";
+import { coachPrompt, parseCoachNote } from "./weightCoach";
 
-describe("parseCoachAdvice", () => {
+describe("parseCoachNote", () => {
   it("reads a good reply", () => {
-    expect(parseCoachAdvice('{"pace_lb_per_week": 1.5, "note": "Nice steady start."}', "lose")).toEqual({
-      pace: 1.5,
-      note: "Nice steady start.",
-    });
+    expect(parseCoachNote('{"note": "Nice steady start."}')).toBe("Nice steady start.");
   });
 
-  it("tolerates a code fence and a number sent as text", () => {
-    expect(parseCoachAdvice('```json\n{"pace_lb_per_week": "1", "note": "ok"}\n```', "lose")?.pace).toBe(1);
-  });
-
-  it("pulls an unsafe pace back into range", () => {
-    expect(parseCoachAdvice({ pace_lb_per_week: 6, note: "" }, "lose")?.pace).toBe(2);
-    expect(parseCoachAdvice({ pace_lb_per_week: 3, note: "" }, "gain")?.pace).toBe(1);
+  it("tolerates a code fence and tidies spacing", () => {
+    expect(parseCoachNote('```json\n{"note": "  Keep   going. "}\n```')).toBe("Keep going.");
   });
 
   it("rejects replies it can't trust", () => {
-    expect(parseCoachAdvice("not json", "lose")).toBeNull();
-    expect(parseCoachAdvice({ note: "no pace" }, "lose")).toBeNull();
-    expect(parseCoachAdvice({ pace_lb_per_week: -1, note: "" }, "lose")).toBeNull();
-    expect(parseCoachAdvice([1], "lose")).toBeNull();
+    expect(parseCoachNote("not json")).toBeNull();
+    expect(parseCoachNote({ pace: 1 })).toBeNull();
+    expect(parseCoachNote({ note: "   " })).toBeNull();
+    expect(parseCoachNote([1])).toBeNull();
   });
 
   it("keeps the note short", () => {
-    const long = "a".repeat(500);
-    expect(parseCoachAdvice({ pace_lb_per_week: 1, note: long }, "lose")?.note).toHaveLength(200);
+    expect(parseCoachNote({ note: "a".repeat(500) })).toHaveLength(200);
   });
 });
 
 describe("coachPrompt", () => {
-  it("describes the numbers and the trend", () => {
-    const text = coachPrompt({ start: 200, current: 195, target: 180, direction: "lose", trend: -1, weeksTracked: 5 });
+  const base = { start: 200, current: 195, target: 180, direction: "lose" as const, pace: 2, weeksTracked: 5 };
+
+  it("describes the numbers, the chosen pace and the trend", () => {
+    const text = coachPrompt({ ...base, trend: -1 });
     expect(text).toContain("Current weight: 195.0 lb");
+    expect(text).toContain("Chosen pace: 2.0 lb per week");
     expect(text).toContain("-1.0 lb per week");
-    expect(coachPrompt({ start: 200, current: 195, target: 180, direction: "lose", trend: null, weeksTracked: 0 })).toContain(
-      "not enough weigh-ins yet",
-    );
+    expect(coachPrompt({ ...base, trend: null })).toContain("not enough weigh-ins yet");
   });
 });

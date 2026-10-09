@@ -10,8 +10,7 @@ import {
   COACH_JSON_SCHEMA,
   COACH_SYSTEM_PROMPT,
   coachPrompt,
-  parseCoachAdvice,
-  type CoachAdvice,
+  parseCoachNote,
   type CoachInput,
 } from "./weightCoach";
 
@@ -84,14 +83,14 @@ export async function estimateNutrition(input: EstimateInput): Promise<EstimateR
 }
 
 /**
- * Asks the AI for a healthy weekly pace toward your weight target, plus one line of
- * coaching. Returns null when the AI isn't set up, is busy, or sent something unusable;
- * the app then uses its built-in pace instead (lib/weightPlan.ts).
+ * Asks the AI for one line of coaching about your weight goal (your pace is your own
+ * choice; the AI doesn't change it). Returns null when the AI isn't set up, is busy, or
+ * sent something unusable; the Weight tab then just shows no note.
  */
-export async function suggestWeightPace(input: CoachInput): Promise<CoachAdvice | null> {
+export async function writeWeightCoachNote(input: CoachInput): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
-  return runModelChain<CoachAdvice | null>({
+  return runModelChain<string | null>({
     apiKey,
     parts: [{ text: coachPrompt(input) }],
     systemInstruction: COACH_SYSTEM_PROMPT,
@@ -99,8 +98,8 @@ export async function suggestWeightPace(input: CoachInput): Promise<CoachAdvice 
     busy: null,
     stopped: null,
     read: (text) => {
-      const advice = parseCoachAdvice(text, input.direction);
-      return advice ? { done: advice } : { retry: null };
+      const note = parseCoachNote(text);
+      return note ? { done: note } : { retry: null };
     },
   });
 }

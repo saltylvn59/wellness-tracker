@@ -9,12 +9,12 @@ import WeightProgress from "@/components/WeightProgress";
 import { currentUserId } from "@/lib/actionResult";
 import { DATABASE_BEHIND_MESSAGE } from "@/lib/dbErrors";
 import { formatFullDate, formatWeekday, isValidDateKey } from "@/lib/dates";
-import { coachKey, goalNumbers, planSummary, recentTrend } from "@/lib/weightPlan";
+import { coachKey, goalNumbers, planSummary, recentTrend, WEEKLY_PACE_LB } from "@/lib/weightPlan";
 import { loadWeightData } from "@/lib/weightQueries";
 import { createClient } from "@/lib/supabase/server";
 
 // The Weight tab: one card at the top with your progress toward your target, a chart,
-// and the weekly pace the AI suggests (weeks to go, goal date); then today's weigh-in wheels.
+// and your 2 lb/week pace (weeks to go, goal date) with an AI coaching note; then today's weigh-in wheels.
 export default async function WeightPage({
   searchParams,
 }: {
@@ -33,10 +33,10 @@ export default async function WeightPage({
   const latest = data.logs.at(-1) ?? null;
   const trend = recentTrend(data.logs);
 
-  // The plan uses the saved pace only if it was worked out for these exact numbers.
-  // If not, the progress card shows "Updating your plan…" and fetches a fresh one.
+  // The numbers always use your chosen pace. The AI note is shown only if it was written
+  // for these exact numbers; if not, the card shows "Updating your plan…" and gets a fresh one.
   const fresh = numbers !== null && data.plan.key === coachKey(numbers.start, numbers.current, numbers.target);
-  const plan = numbers && planSummary({ ...numbers, pace: fresh ? data.plan.pace : null, today: date });
+  const plan = numbers && planSummary({ ...numbers, pace: WEEKLY_PACE_LB, today: date });
 
   const chart =
     data.logs.length > 0 ? (

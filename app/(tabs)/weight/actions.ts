@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { currentUserId, failedSave, INVALID_DATE, SAVE_FAILED, SIGN_IN_AGAIN, type ActionResult } from "@/lib/actionResult";
 import { takeAiRequest } from "@/lib/ai/dailyLimit";
-import { suggestWeightPace } from "@/lib/ai/gemini";
+import { writeWeightCoachNote } from "@/lib/ai/gemini";
 import { daysBetween, isValidDateKey } from "@/lib/dates";
 import { parseWeight } from "@/lib/weight";
-import { autoPace, coachKey, goalDirection, goalNumbers, recentTrend } from "@/lib/weightPlan";
+import { clampPace, coachKey, goalDirection, goalNumbers, recentTrend, WEEKLY_PACE_LB } from "@/lib/weightPlan";
 import { loadWeightData } from "@/lib/weightQueries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,10 +43,10 @@ export async function deleteWeight(date: string): Promise<ActionResult> {
 }
 
 /**
- * Brings the saved weekly pace up to date. The Weight tab calls this by itself when
- * your numbers have changed since the last suggestion (a new weigh-in or a new target).
- * It asks the AI; if the AI is busy or you're over today's AI limit, it uses the
- * built-in safe pace instead, so the screen always has numbers.
+ * Brings the AI coaching note up to date. The Weight tab calls this by itself when your
+ * numbers have changed since the last note (a new weigh-in, start or target). The pace
+ * is always your chosen WEEKLY_PACE_LB; if the AI is busy or you're over today's AI
+ * limit, the note is simply left empty until your next weigh-in.
  */
 export async function refreshWeightPlan(today: string): Promise<ActionResult> {
   if (!isValidDateKey(today)) return INVALID_DATE;
@@ -59,15 +59,17 @@ export async function refreshWeightPlan(today: string): Promise<ActionResult> {
   const numbers = goalNumbers(data);
   if (data.databaseBehind || !numbers) return { ok: true }; // nothing to plan yet
   const direction = goalDirection(numbers.current, numbers.target);
-  if (direction === "done") return { ok: true }; // at your target: no pace needed
+  if (direction === "done") return { ok: true }; // at your target: no note needed
 
   const key = coachKey(numbers.start, numbers.current, numbers.target);
   if (data.plan.key === key) return { ok: true }; // already up to date
 
-  const advice = (await takeAiRequest(supabase, userId))
-    ? await suggestWeightPace({
+  const pace = clampPace(WEEKLY_PACE_LB, direction);
+  const note = (await takeAiRequest(supabase, userId))
+    ? await writeWeightCoachNote({
         ...numbers,
         direction,
+        pace,
         trend: recentTrend(data.logs),
         weeksTracked: data.first ? Math.max(0, Math.floor(daysBetween(data.first.date, today) / 7)) : 0,
       })
@@ -76,9 +78,9 @@ export async function refreshWeightPlan(today: string): Promise<ActionResult> {
   const { error } = await supabase
     .from("profiles")
     .update({
-      weight_pace_lb_week: advice?.pace ?? autoPace(numbers.current, direction),
-      weight_coach_note: advice?.note || null,
-      weight_coach_source: advice ? "ai" : "auto",
+      weight_pace_lb_week: pace,
+      weight_coach_note: note,
+      weight_coach_source: note ? "ai" : "auto",
       weight_coach_key: key,
     })
     .eq("id", userId);
