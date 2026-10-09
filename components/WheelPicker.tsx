@@ -3,8 +3,6 @@
 import { useEffect, useRef } from "react";
 
 const ITEM_HEIGHT = 44; // px per row
-const VISIBLE_ROWS = 5; // rows you can see; the middle one is the selected one
-const PAD = ((VISIBLE_ROWS - 1) / 2) * ITEM_HEIGHT; // lets the first and last rows reach the middle
 
 type Props = {
   label: string;
@@ -12,12 +10,16 @@ type Props = {
   value: number;
   onChange: (value: number) => void;
   format?: (value: number) => string;
+  rows?: 3 | 5; // rows you can see (the middle one is the selected one); 3 is more compact
+  showLabel?: boolean; // the small title above the wheel (screen readers always get it)
 };
 
 // An iPhone-style scroll wheel. It's an ordinary scrollable list that "snaps"
 // one row at a time (CSS scroll-snap); whichever row ends up in the middle band
 // is the chosen value. Works with touch, mouse wheel, and the arrow keys.
-export default function WheelPicker({ label, options, value, onChange, format = String }: Props) {
+export default function WheelPicker({ label, options, value, onChange, format = String, rows = 5, showLabel = true }: Props) {
+  const PAD = ((rows - 1) / 2) * ITEM_HEIGHT; // lets the first and last rows reach the middle
+  const fade = Math.round(PAD * 0.7); // the soft fades stop short of the selected row
   const scroller = useRef<HTMLDivElement>(null);
   const syncing = useRef(false); // true while WE are scrolling the wheel to match an outside change
   const syncTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -60,8 +62,8 @@ export default function WheelPicker({ label, options, value, onChange, format = 
 
   return (
     <div className="flex-1">
-      <p className="mb-1 text-center text-xs font-medium text-muted">{label}</p>
-      <div className="relative" style={{ height: ITEM_HEIGHT * VISIBLE_ROWS }}>
+      {showLabel && <p className="mb-1 text-center text-xs font-medium text-muted">{label}</p>}
+      <div className="relative" style={{ height: ITEM_HEIGHT * rows }}>
         <div
           ref={scroller}
           role="listbox"
@@ -104,11 +106,13 @@ export default function WheelPicker({ label, options, value, onChange, format = 
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-16 rounded-t-2xl bg-gradient-to-b from-[var(--card)] to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 rounded-t-2xl bg-gradient-to-b from-[var(--card)] to-transparent"
+          style={{ height: fade }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 rounded-b-2xl bg-gradient-to-t from-[var(--card)] to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-2xl bg-gradient-to-t from-[var(--card)] to-transparent"
+          style={{ height: fade }}
         />
       </div>
     </div>
