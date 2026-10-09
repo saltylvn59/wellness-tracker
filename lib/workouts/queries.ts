@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CardioLogRow } from "../cardio";
 import { weeklyTotals, type WeeklyGoals } from "../cardioGoals";
 import { weekDays } from "../dates";
-import type { LatestWeight } from "../weight";
 import type { HistoryRow } from "./history";
 import { MIN_REPS_FOR_MAX, THREE_REP_MAX_LIFTS } from "./maxes";
 import type { PlanExercise } from "./plan";
@@ -122,17 +121,15 @@ export type CardioDayData = {
   logs: CardioLogRow[]; // cardio logged on this date
   weekTotals: ReturnType<typeof weeklyTotals>;
   weeklyGoals: WeeklyGoals;
-  latestWeight: LatestWeight | null; // your latest weigh-in on or before this date
-  targetWeight: number | null;
 };
 
 export async function loadCardioDay(supabase: SupabaseClient, userId: string, date: string): Promise<CardioDayData> {
   const week = weekDays(date);
-  const [weekLogs, profile, dayLogs, latest] = await Promise.all([
+  const [weekLogs, profile, dayLogs] = await Promise.all([
     supabase.from("cardio_logs").select("kind, distance, distance_unit").gte("log_date", week[0]).lte("log_date", week[6]),
     supabase
       .from("profiles")
-      .select("weekly_run_miles, weekly_cycle_miles, weekly_swim_yards, target_weight_lb")
+      .select("weekly_run_miles, weekly_cycle_miles, weekly_swim_yards")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -140,13 +137,6 @@ export async function loadCardioDay(supabase: SupabaseClient, userId: string, da
       .select("id, kind, distance, distance_unit, duration_minutes")
       .eq("log_date", date)
       .order("created_at", { ascending: true }),
-    supabase
-      .from("weight_logs")
-      .select("log_date, weight_lb")
-      .lte("log_date", date)
-      .order("log_date", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
   ]);
 
   const goals = profile.data;
@@ -170,10 +160,6 @@ export async function loadCardioDay(supabase: SupabaseClient, userId: string, da
       cycle: asNumber(goals?.weekly_cycle_miles),
       swim: asNumber(goals?.weekly_swim_yards),
     },
-    latestWeight: latest.data
-      ? { date: latest.data.log_date as string, pounds: Number(latest.data.weight_lb) }
-      : null,
-    targetWeight: asNumber(goals?.target_weight_lb),
   };
 }
 

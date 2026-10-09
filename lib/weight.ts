@@ -1,12 +1,9 @@
-// Body weight (pounds): a weigh-in log on cardio days and a target weight in Settings.
+// Body weight (pounds): the weigh-in log on the Weight tab. (The goal math is in weightPlan.ts.)
 // The scroll wheels pick whole pounds and tenths (like 185 and .4 for 185.4 lb).
 
 export const MIN_WEIGHT_LB = 70;
 export const MAX_WEIGHT_LB = 500;
 export const DEFAULT_WEIGHT_LB = 150; // where the wheels start before your first weigh-in
-
-// A weigh-in as shown on the Weight card: the date you weighed in and the pounds.
-export type LatestWeight = { date: string; pounds: number };
 
 /** 70, 71 ... 500: the whole-pound wheel. */
 export const WHOLE_POUND_OPTIONS: number[] = Array.from(
@@ -38,12 +35,4 @@ export function parseWeight(value: unknown): number | null {
 /** 185.4 -> "185.4", 185 -> "185.0" (one decimal, like a scale shows it). */
 export function formatWeightLb(lb: number): string {
   return lb.toFixed(1);
-}
-
-/** How far you are from your target: "8.4 lb to go", or "At your target" (within 0.05). */
-export function describeTargetGap(current: number, target: number): { atTarget: boolean; text: string } {
-  const gap = Math.round(Math.abs(current - target) * 10) / 10;
-  return gap < 0.05
-    ? { atTarget: true, text: "At your target" }
-    : { atTarget: false, text: `${formatWeightLb(gap)} lb to go` };
 }

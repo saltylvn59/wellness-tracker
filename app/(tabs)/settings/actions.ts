@@ -31,6 +31,7 @@ export async function saveGoals(_previous: SaveResult, formData: FormData): Prom
   }
 
   revalidatePath("/food");
+  revalidatePath("/weight");
   return { ok: true, message: "Saved." };
 }
 

@@ -11,6 +11,7 @@ export type Goals = {
   weekly_cycle_miles: number | null;
   weekly_swim_yards: number | null;
   target_weight_lb: number | null;
+  start_weight_lb: number | null;
 };
 
 export type GoalsResult = { ok: true; values: Goals } | { ok: false; message: string };
@@ -25,6 +26,7 @@ export const GOAL_LIMITS = {
   weekly_cycle_miles: { min: 0.1, max: 500 },
   weekly_swim_yards: { min: 1, max: 100000 },
   target_weight_lb: { min: 70, max: 500 },
+  start_weight_lb: { min: 70, max: 500 },
 } as const;
 
 // Blank -> null; a number in range (rounded to `decimals` places) -> that number; anything
@@ -86,8 +88,9 @@ export function parseGoalsForm(formData: FormData): GoalsResult {
 
   const { target_weight_lb: weightLimits } = GOAL_LIMITS;
   const targetWeight = readGoal(formData.get("target_weight_lb"), weightLimits.min, weightLimits.max, 1);
-  if (targetWeight === "invalid") {
-    return { ok: false, message: "Target weight must be between 70 and 500 lb, or left blank." };
+  const startWeight = readGoal(formData.get("start_weight_lb"), weightLimits.min, weightLimits.max, 1);
+  if (targetWeight === "invalid" || startWeight === "invalid") {
+    return { ok: false, message: "Starting and target weights must be between 70 and 500 lb, or left blank." };
   }
 
   return {
@@ -99,6 +102,7 @@ export function parseGoalsForm(formData: FormData): GoalsResult {
       weekly_cycle_miles: cycle,
       weekly_swim_yards: swim,
       target_weight_lb: targetWeight,
+      start_weight_lb: startWeight,
     },
   };
 }
